@@ -1,0 +1,10 @@
+graph TD
+    A[User Command: "What's the temperature in the bedroom?"] --> B(MCP Receives Command)
+    B --> C{Check Redis Cache}
+    C -- Cache Hit --> H(Return Cached Response)
+    C -- Cache Miss --> D(MCP Prompts Ollama for `get_state` Action)
+    D --> E{Ollama Responds with `get_state` Action}
+    E --> F(MCP Queries Home Assistant for Temperature State)
+    F --> G(MCP Formulates Conversational Response)
+    G --> I(MCP Caches & Logs)
+    I --> J[Return Final Response to User]

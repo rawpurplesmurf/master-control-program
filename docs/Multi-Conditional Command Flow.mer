@@ -1,0 +1,13 @@
+graph TD
+    A[User Command: "Turn on the office 12V if it's between 12-4am and temp < 40F"] --> B(MCP Receives Command)
+    B --> C(MCP Prompts Ollama with Context for Multi-Condition Action)
+    C --> D{Ollama Responds with Multi-step Action Plan}
+    D --> E(MCP Checks Time Condition)
+    E -- Condition Met --> F(MCP Queries Home Assistant for Temperature State)
+    E -- Condition Not Met --> I(Halt & Return "Condition Not Met")
+    F --> G{Evaluate Temperature Condition}
+    G -- Condition Met --> H(MCP Executes `switch.turn_on` Service)
+    G -- Condition Not Met --> I
+    H --> J(MCP Caches & Logs)
+    J --> K[Return Final Response to User]
+    I --> K

@@ -1,0 +1,53 @@
+INSTRUCTIONS FOR PROMPT TEMPLATE MANAGEMENT FEATURE (V2)
+This document provides all specifications for implementing the Prompt Template Management (CRUD) API and its supporting MySQL schema within the existing MCP codebase.
+
+1. DATABASE SCHEMA IMPLEMENTATION (MySQL)
+Create the following table definition in MySQL. This table stores all instructions, constraints, and routing data for the LLM prompts.
+
+Note on Fields:
+
+intent_keywords: Comma-separated list for routing (e.g., "turn on, set, adjust").
+
+system_prompt: Defines the LLM's role and mandates JSON output format.
+
+user_template: Contains placeholders (e.g., [user_command], [ha_device_status]).
+
+pre_fetch_data: A JSON array (List[str] in Python) listing required context data to fetch before prompting (e.g., ["ha_device_status", "rules_list", "current_time"]).
+
+2. REQUIRED PYTHON MODELS
+Define the necessary Pydantic models for data validation, matching the fields defined in the schema above.
+
+3. CORE LOGIC IMPLEMENTATION (CRUD OPERATIONS)
+Implement a dedicated module (e.g., crud_prompts.py) to handle database interactions with the prompt_templates table using SQLAlchemy. All functions must handle timestamps (created_at, updated_at).
+
+create_prompt_template(db: Session, data): Inserts a new template.
+
+read_all_prompt_templates(db: Session): Fetches all available templates.
+
+read_prompt_template_by_id(db: Session, template_id: int): Fetches a single template.
+
+update_prompt_template(db: Session, template_id: int, data): Updates template content.
+
+delete_prompt_template(db: Session, template_id: int): Removes a template.
+
+4. FASTAPI ENDPOINTS IMPLEMENTATION
+Implement a new router for managing templates under the /api/prompts path. Ensure proper Pydantic models are used for request body validation and response serialization.
+
+Endpoint	Method	Action
+/api/prompts	POST	Create a new prompt template. (Returns 201 Created).
+/api/prompts	GET	Retrieve a list of all prompt templates. (Returns 200 OK).
+/api/prompts/{template_id}	GET	Retrieve a single template by ID. (Returns 200 OK or 404 Not Found).
+/api/prompts/{template_id}	PUT	Fully update an existing template. (Returns 200 OK).
+/api/prompts/{template_id}	DELETE	Delete a template by ID. (Returns 204 No Content).
+
+Export to Sheets
+5. INTEGRATION: PROMPT ROUTING LOGIC
+Update the existing handler for POST /api/command to use this system:
+
+Intent Classification: Upon receiving a user command, the MCP must execute read_all_prompt_templates() to retrieve all template_name and intent_keywords.
+
+Template Selection: Use a loop to match the user's command against the intent_keywords. Select the matching template.
+
+Dynamic Pre-Fetch: Use the selected template's pre_fetch_data list to determine which context blocks (ha_device_status, rules_list, external_data, etc.) must be assembled before calling Ollama.
+
+Rendering: Substitute the collected data into the template's user_template and combine it with the system_prompt before sending the final request to Ollama.

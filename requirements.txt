@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+mysql-connector-python
+SQLAlchemy
+python-dotenv
+httpx
+apscheduler
+pytest
+pydantic-settings
+redis>=4.2.0
+pytest-asyncio
+requests 
+redis
+python-dotenv

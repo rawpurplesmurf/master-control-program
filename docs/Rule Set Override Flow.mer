@@ -1,0 +1,11 @@
+graph TD
+    A[User Command: "Turn on the bedroom lights"] --> B(MCP Receives Command)
+    B --> C(MCP Prompts Ollama with Ruleset in Context)
+    C --> D{Ollama Responds with `entity_id` for all lights}
+    D --> E(MCP Enforces Ruleset)
+    E -- Rule Triggered & No Override --> F(MCP Overrides `entity_id` to bedside lights)
+    E -- Rule Not Triggered --> G(MCP Uses Ollama's `entity_id`)
+    F --> H(MCP Executes Home Assistant API Call)
+    G --> H
+    H --> I(MCP Caches & Logs)
+    I --> J[Return Final Response to User]

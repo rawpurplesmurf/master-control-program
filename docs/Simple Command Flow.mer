@@ -1,0 +1,11 @@
+graph TD
+    A[User Command: "Turn on the living room light"] --> B(MCP Receives Command)
+    B --> C{Check Redis Cache}
+    C -- Cache Hit --> J(Return Cached Response)
+    C -- Cache Miss --> D(MCP Gets Entities from MySQL)
+    D --> E(MCP Prompts Ollama with Context)
+    E --> F{Ollama Responds with Action Plan}
+    F --> G(MCP Enforces Rules)
+    G --> H(MCP Executes Home Assistant API Call)
+    H --> I(MCP Caches & Logs)
+    I --> K[Return Final Response to User]

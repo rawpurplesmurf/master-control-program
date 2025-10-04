@@ -1,0 +1,13 @@
+graph TD
+    A[User Command: "Turn on the light if it's dark"] --> B(MCP Receives Command)
+    B --> C{Check Redis Cache}
+    C -- Cache Hit --> K(Return Cached Response)
+    C -- Cache Miss --> D(MCP Prompts Ollama for Action Plan)
+    D --> E{Ollama Responds with `check_state` Action}
+    E --> F(MCP Queries Home Assistant API for Lux Sensor State)
+    F --> G{Evaluate Condition}
+    G -- Condition Met --> H(MCP Executes `light.turn_on` Service)
+    G -- Condition Not Met --> J(MCP Formulates "Condition Not Met" Response)
+    H --> I(MCP Caches & Logs)
+    I --> L[Return Final Response to User]
+    J --> L
