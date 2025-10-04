@@ -1,4 +1,5 @@
 import json
+import logging
 import httpx
 from datetime import datetime
 from typing import List, Dict, Any
@@ -6,6 +7,8 @@ from fastapi import HTTPException
 
 from mcp.config import settings
 from mcp.cache import redis_client
+
+logger = logging.getLogger(__name__)
 
 def create_ollama_prompt(command: str, entities: Dict[str, str], rules: List[Dict[str, Any]]) -> str:
     system_prompt = (
@@ -30,6 +33,54 @@ def create_ollama_prompt(command: str, entities: Dict[str, str], rules: List[Dic
     """
     return f"{system_prompt}\n{user_prompt}\n\nReturn ONLY the JSON array matching this schema:\n{response_schema}"
 
+async def call_ollama_text(prompt: str) -> str:
+    """Call Ollama for natural language text response (not structured JSON)."""
+    logger.info(f"Calling Ollama for text response with model: {settings.OLLAMA_MODEL}")
+    logger.debug(f"Prompt length: {len(prompt)} characters")
+    
+    # Check cache first
+    cache_key = f"text:{prompt}"
+    cached_response = await redis_client.get(cache_key)
+    if cached_response:
+        logger.info("Found cached response for Ollama text request")
+        return cached_response.decode('utf-8')
+
+    logger.info(f"No cache hit, sending request to Ollama at {settings.OLLAMA_URL}")
+    try:
+        async with httpx.AsyncClient() as client:
+            ollama_request = {
+                "model": settings.OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False
+                # No "format": "json" for natural language responses
+            }
+            logger.debug(f"Ollama request payload: {json.dumps(ollama_request, indent=2)}")
+            
+            response = await client.post(
+                f"{settings.OLLAMA_URL}/api/generate",
+                json=ollama_request,
+                timeout=60
+            )
+            logger.info(f"Ollama API response status: {response.status_code}")
+            response.raise_for_status()
+            
+            full_response = response.json()
+            response_text = full_response['response']
+            logger.info(f"Received Ollama response, length: {len(response_text)} characters")
+            logger.debug(f"Ollama response preview: {response_text[:200]}...")
+            
+            # Cache the response
+            await redis_client.set(cache_key, response_text, ex=3600)  # Cache for 1 hour
+            logger.info("Cached Ollama response for 1 hour")
+
+            return response_text
+    except httpx.HTTPStatusError as e:
+        # Log the error for debugging
+        print(f"Ollama API error: {e.response.status_code} - {e.response.text}")
+        raise HTTPException(status_code=e.response.status_code, detail=f"Ollama API error: {e.response.text}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ollama call failed: {str(e)}")
+
 async def call_ollama(prompt: str) -> List[Dict[str, Any]]:
     # Check cache first
     cached_response = await redis_client.get(prompt)
@@ -41,7 +92,7 @@ async def call_ollama(prompt: str) -> List[Dict[str, Any]]:
             response = await client.post(
                 f"{settings.OLLAMA_URL}/api/generate",
                 json={
-                    "model": "llama3",
+                    "model": settings.OLLAMA_MODEL,
                     "prompt": prompt,
                     "stream": False,
                     "format": "json"

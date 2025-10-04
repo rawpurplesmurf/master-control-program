@@ -83,23 +83,34 @@ def client():
                 return filtered
                 
             def filter(self_inner, condition):
+                # Create a new query object that applies the filter
+                filtered_rules = []
+                
+                # Extract the filter value from the SQLAlchemy condition
+                # This is a simple mock - in real SQLAlchemy, condition would be more complex
+                try:
+                    # For models.Rule.rule_type == rule_type, we want the right side value
+                    if hasattr(condition, 'right'):
+                        filter_value = condition.right
+                    else:
+                        # Fallback - this shouldn't happen in normal use
+                        filter_value = None
+                        
+                    if filter_value:
+                        filtered_rules = [r for r in rules if r.rule_type == filter_value]
+                    else:
+                        filtered_rules = rules
+                except:
+                    # If we can't parse the condition, return all rules
+                    filtered_rules = rules
+                
                 class FilteredQuery:
-                    def __init__(self_inner2):
-                        self_inner2._filters = self_inner._filters.copy()
-                        # Mock filter for rule_type
-                        if hasattr(condition, 'right') and hasattr(condition.right, 'value'):
-                            rule_type_filter = condition.right.value
-                            self_inner2._filters.append(lambda r: r.rule_type == rule_type_filter)
+                    def all(self):
+                        return filtered_rules
                         
-                    def all(self_inner2):
-                        filtered = rules
-                        for filter_func in self_inner2._filters:
-                            filtered = [r for r in filtered if filter_func(r)]
-                        return filtered
+                    def first(self):
+                        return filtered_rules[0] if filtered_rules else None
                         
-                    def first(self_inner2):
-                        filtered = self_inner2.all()
-                        return filtered[0] if filtered else None
                 return FilteredQuery()
                 
             def first(self_inner):
@@ -142,6 +153,8 @@ def test_filter_skippy_guardrails(client):
     response = client.get("/api/rules?rule_type=skippy_guardrail")
     assert response.status_code == 200
     data = response.json()
+    # Should return at least one rule and all should be skippy_guardrail type
+    assert len(data) >= 1
     for rule in data:
         assert rule["rule_type"] == "skippy_guardrail"
 
@@ -150,6 +163,8 @@ def test_filter_submind_automations(client):
     response = client.get("/api/rules?rule_type=submind_automation")
     assert response.status_code == 200
     data = response.json()
+    # Should return at least one rule and all should be submind_automation type  
+    assert len(data) >= 1
     for rule in data:
         assert rule["rule_type"] == "submind_automation"
 

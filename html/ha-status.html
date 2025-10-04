@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="vie            <a class="navbar-brand" href="/html/admin.html">
+                <i class="bi bi-house-gear-fill"></i> MCP Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/html/admin.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/html/ha-status.html">
+                            <i class="bi bi-house-check-fill"></i> HA Status
+                        </a>
+                    </li>
+                </ul>
+            </div>
+    <title>Home Assistant Status - MCP Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { 
+            padding: 1rem; 
+            background-color: #f8f9fa;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .entity-card {
+            margin-bottom: 1rem;
+            border-left: 4px solid #0d6efd;
+        }
+        .entity-card.light { border-left-color: #ffc107; }
+        .entity-card.switch { border-left-color: #198754; }
+        .entity-card.sensor { border-left-color: #dc3545; }
+        .entity-card.climate { border-left-color: #20c997; }
+        .entity-card.media_player { border-left-color: #6f42c1; }
+        .entity-card.binary_sensor { border-left-color: #fd7e14; }
+        .entity-card.cover { border-left-color: #6c757d; }
+        .entity-card.lock { border-left-color: #0dcaf0; }
+        
+        .entity-state {
+            font-weight: bold;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        .state-on { background-color: #d4edda; color: #155724; }
+        .state-off { background-color: #f8d7da; color: #721c24; }
+        .state-unknown { background-color: #e2e3e5; color: #383d41; }
+        .state-unavailable { background-color: #fff3cd; color: #856404; }
+        
+        .attribute-badge {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .domain-filter {
+            margin: 0.25rem;
+        }
+        
+        .search-container {
+            position: sticky;
+            top: 76px;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            z-index: 100;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        
+        .last-updated {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="admin.html">
+                <i class="bi bi-house-gear-fill"></i> MCP Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin.html">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="ha-status.html">
+                            <i class="bi bi-house-check-fill"></i> HA Status
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/html/prompt-history.html">
+                            <i class="bi bi-clock-history"></i> Prompt History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/html/skippy-chat.html">
+                            <i class="bi bi-robot"></i> Skippy Chat
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="navbar-text last-updated" id="lastUpdated">
+                            <i class="bi bi-clock"></i> Never refreshed
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Statistics Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card stats-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-hdd-rack-fill fs-1 mb-2"></i>
+                        <h5 class="card-title">Total Entities</h5>
+                        <h2 class="mb-0" id="totalEntities">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-check-circle-fill fs-1 mb-2"></i>
+                        <h5 class="card-title">Available</h5>
+                        <h2 class="mb-0" id="availableEntities">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 mb-2"></i>
+                        <h5 class="card-title">Unavailable</h5>
+                        <h2 class="mb-0" id="unavailableEntities">-</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="bi bi-collection-fill fs-1 mb-2"></i>
+                        <h5 class="card-title">Domains</h5>
+                        <h2 class="mb-0" id="totalDomains">-</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="search-container">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search entities...">
+                    </div>
+                </div>
+                <div class="col-md-6" id="domainFilters">
+                    <!-- Domain filter buttons will be populated here -->
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="loadHAStatus()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Entities Container -->
+        <div id="entitiesContainer" class="row" style="display: none;">
+            <!-- Entity cards will be populated here -->
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="alert alert-danger" style="display: none;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Error:</strong> <span id="errorText"></span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allEntities = [];
+        let currentFilter = '';
+
+        // Load HA Status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHAStatus();
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            filterEntities();
+        });
+
+        function loadHAStatus() {
+            document.getElementById('loadingSpinner').style.display = 'flex';
+            document.getElementById('entitiesContainer').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            // First check if HA is available via health check
+            fetch('/api/health/ha')
+                .then(response => response.json())
+                .then(healthData => {
+                    if (healthData.status === 'error') {
+                        throw new Error('Home Assistant is not available: ' + healthData.detail);
+                    }
+                    
+                    // If HA is healthy, get entities from cache
+                    return fetch('/api/ha/entities');
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(entities => {
+                    allEntities = entities;
+                    displayEntities(entities);
+                    updateStatistics(entities);
+                    createDomainFilters(entities);
+                    updateLastRefreshed();
+                })
+                .catch(error => {
+                    console.error('Error loading HA status:', error);
+                    showError(error.message);
+                })
+                .finally(() => {
+                    document.getElementById('loadingSpinner').style.display = 'none';
+                });
+        }
+
+        function displayEntities(entities) {
+            const container = document.getElementById('entitiesContainer');
+            container.innerHTML = '';
+
+            if (entities.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="bi bi-info-circle-fill"></i>
+                            No entities found matching current filters.
+                        </div>
+                    </div>
+                `;
+                container.style.display = 'block';
+                return;
+            }
+
+            // Group entities by domain
+            const groupedEntities = {};
+            entities.forEach(entity => {
+                const domain = entity.entity_id.split('.')[0];
+                if (!groupedEntities[domain]) {
+                    groupedEntities[domain] = [];
+                }
+                groupedEntities[domain].push(entity);
+            });
+
+            // Sort domains alphabetically
+            const sortedDomains = Object.keys(groupedEntities).sort();
+
+            sortedDomains.forEach(domain => {
+                // Create domain section
+                const domainSection = document.createElement('div');
+                domainSection.className = 'col-12 mb-3';
+                domainSection.innerHTML = `
+                    <h4 class="text-primary border-bottom pb-2">
+                        <i class="bi bi-${getDomainIcon(domain)}"></i> 
+                        ${domain.charAt(0).toUpperCase() + domain.slice(1)} 
+                        <span class="badge bg-secondary">${groupedEntities[domain].length}</span>
+                    </h4>
+                `;
+                container.appendChild(domainSection);
+
+                // Create entities row for this domain
+                const entitiesRow = document.createElement('div');
+                entitiesRow.className = 'row';
+                
+                groupedEntities[domain].forEach(entity => {
+                    const entityCard = createEntityCard(entity);
+                    entitiesRow.appendChild(entityCard);
+                });
+
+                container.appendChild(entitiesRow);
+            });
+
+            container.style.display = 'block';
+        }
+
+        function createEntityCard(entity) {
+            const col = document.createElement('div');
+            col.className = 'col-lg-4 col-md-6 col-sm-12 mb-3';
+
+            const domain = entity.entity_id.split('.')[0];
+            const stateClass = getStateClass(entity.state);
+            
+            // Format attributes
+            let attributesHtml = '';
+            if (entity.attributes) {
+                const importantAttrs = ['friendly_name', 'unit_of_measurement', 'device_class', 'state_class', 'brightness', 'temperature', 'humidity'];
+                importantAttrs.forEach(attr => {
+                    if (entity.attributes[attr] !== undefined) {
+                        attributesHtml += `<span class="attribute-badge">${attr}: ${entity.attributes[attr]}</span>`;
+                    }
+                });
+            }
+
+            col.innerHTML = `
+                <div class="card entity-card ${domain}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-${getDomainIcon(domain)}"></i>
+                                ${entity.attributes?.friendly_name || entity.entity_id}
+                            </h6>
+                            <span class="entity-state ${stateClass}">${entity.state}</span>
+                        </div>
+                        <p class="card-text small text-muted mb-2">${entity.entity_id}</p>
+                        ${attributesHtml ? `<div class="mb-2">${attributesHtml}</div>` : ''}
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> 
+                            ${entity.last_changed ? new Date(entity.last_changed).toLocaleString() : 'Unknown'}
+                        </small>
+                    </div>
+                </div>
+            `;
+            return col;
+        }
+
+        function getDomainIcon(domain) {
+            const icons = {
+                'light': 'lightbulb',
+                'switch': 'toggle-on',
+                'sensor': 'thermometer-half',
+                'binary_sensor': 'record-circle',
+                'climate': 'thermometer-sun',
+                'media_player': 'music-note-beamed',
+                'cover': 'window-sidebar',
+                'lock': 'lock',
+                'camera': 'camera-video',
+                'device_tracker': 'geo-alt',
+                'person': 'person',
+                'automation': 'gear',
+                'script': 'play-circle',
+                'input_boolean': 'toggle2-on',
+                'input_select': 'list-ul',
+                'input_number': 'hash',
+                'input_text': 'fonts',
+                'timer': 'stopwatch',
+                'counter': 'plus-circle',
+                'weather': 'cloud-sun',
+                'sun': 'sun'
+            };
+            return icons[domain] || 'gear';
+        }
+
+        function getStateClass(state) {
+            if (!state) return 'state-unknown';
+            const lowerState = state.toLowerCase();
+            if (['on', 'open', 'unlocked', 'home', 'active', 'detected'].includes(lowerState)) {
+                return 'state-on';
+            } else if (['off', 'closed', 'locked', 'away', 'inactive', 'clear'].includes(lowerState)) {
+                return 'state-off';
+            } else if (['unavailable'].includes(lowerState)) {
+                return 'state-unavailable';
+            } else {
+                return 'state-unknown';
+            }
+        }
+
+        function updateStatistics(entities) {
+            const total = entities.length;
+            const available = entities.filter(e => e.state !== 'unavailable').length;
+            const unavailable = total - available;
+            const domains = [...new Set(entities.map(e => e.entity_id.split('.')[0]))];
+
+            document.getElementById('totalEntities').textContent = total;
+            document.getElementById('availableEntities').textContent = available;
+            document.getElementById('unavailableEntities').textContent = unavailable;
+            document.getElementById('totalDomains').textContent = domains.length;
+        }
+
+        function createDomainFilters(entities) {
+            const domains = [...new Set(entities.map(e => e.entity_id.split('.')[0]))];
+            domains.sort();
+
+            const container = document.getElementById('domainFilters');
+            container.innerHTML = '';
+
+            // Add "All" button
+            const allBtn = document.createElement('button');
+            allBtn.className = 'btn btn-outline-secondary btn-sm domain-filter active';
+            allBtn.textContent = 'All';
+            allBtn.onclick = () => setDomainFilter('');
+            container.appendChild(allBtn);
+
+            // Add domain buttons
+            domains.forEach(domain => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-outline-secondary btn-sm domain-filter';
+                btn.innerHTML = `<i class="bi bi-${getDomainIcon(domain)}"></i> ${domain}`;
+                btn.onclick = () => setDomainFilter(domain);
+                container.appendChild(btn);
+            });
+        }
+
+        function setDomainFilter(domain) {
+            currentFilter = domain;
+            
+            // Update button states
+            document.querySelectorAll('.domain-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            filterEntities();
+        }
+
+        function filterEntities() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filteredEntities = allEntities;
+
+            // Filter by domain
+            if (currentFilter) {
+                filteredEntities = filteredEntities.filter(entity => 
+                    entity.entity_id.startsWith(currentFilter + '.')
+                );
+            }
+
+            // Filter by search term
+            if (searchTerm) {
+                filteredEntities = filteredEntities.filter(entity =>
+                    entity.entity_id.toLowerCase().includes(searchTerm) ||
+                    (entity.attributes?.friendly_name && 
+                     entity.attributes.friendly_name.toLowerCase().includes(searchTerm)) ||
+                    entity.state.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            displayEntities(filteredEntities);
+        }
+
+        function updateLastRefreshed() {
+            const now = new Date();
+            document.getElementById('lastUpdated').innerHTML = 
+                `<i class="bi bi-clock"></i> Last updated: ${now.toLocaleTimeString()}`;
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('entitiesContainer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

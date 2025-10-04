@@ -1,3 +1,147 @@
+## [0.8.0] - 2025-10-03
+
+### Added - Comprehensive Prompt History System
+- **Complete LLM Interaction Tracking**: Store and manage all prompt/response interactions
+  - **Automatic Storage**: Every command processed through `/api/command` is automatically stored in Redis
+  - **Rich Metadata**: Capture processing time, template used, context keys, source, and timestamps
+  - **Source Tracking**: Tag interactions by source (api, skippy, submind, rerun, manual)
+  - **30-Day Retention**: Automatic cleanup with configurable TTL in Redis
+- **Prompt History API Endpoints**: Complete REST API for history management
+  - `GET /api/prompt-history` - Retrieve history with pagination and filtering
+  - `GET /api/prompt-history/stats` - Get statistics and source distribution
+  - `GET /api/prompt-history/{id}` - Get specific interaction details
+  - `POST /api/prompt-history/{id}/rerun` - Re-execute previous prompts
+  - `DELETE /api/prompt-history/{id}` - Remove specific interactions
+- **Beautiful Web Interface**: New prompt history management page
+  - **Interactive Timeline**: View all prompt interactions in chronological order
+  - **Source Filtering**: Filter by API, Skippy, Submind, rerun, or manual sources
+  - **Detailed Views**: Expandable cards showing full prompts and responses
+  - **Re-run Capability**: One-click re-execution of any previous prompt
+  - **Performance Metrics**: Processing times and metadata visualization
+  - **Responsive Design**: Mobile-friendly Bootstrap 5 interface
+- **Enhanced Command Processing**: Updated pipeline with history integration
+  - **Source Parameter**: Commands now accept source tracking parameter
+  - **Interaction IDs**: All commands return unique interaction IDs
+  - **Error Logging**: Failed commands also stored in history for debugging
+  - **Metadata Enrichment**: Enhanced metadata capture including template and context information
+- **Skippy Chat Interface**: Beautiful web-based AI chat interface
+  - **Interactive Chat UI**: Real-time conversation interface with streaming responses
+  - **Thinking Process Visualization**: Shows AI reasoning steps including template selection and data fetching
+  - **Source Integration**: All chat interactions automatically tagged as "skippy" source
+  - **Performance Metrics Display**: Shows processing times, templates used, and interaction metadata
+  - **Responsive Design**: Mobile-optimized Bootstrap interface with smooth animations
+  - **Error Handling**: Graceful connection error display and status indicators
+
+### Enhanced
+- **Navigation Updates**: Added prompt history links to all admin interfaces
+- **Test Coverage**: Comprehensive test suite for prompt history functionality
+  - 15 new test functions covering all history operations
+  - Error handling, pagination, filtering, and re-run functionality testing
+  - Proper mocking of Redis operations and LLM calls
+- **API Documentation**: Complete documentation for all prompt history endpoints
+- **cURL Examples**: Extensive examples for all history operations and use cases
+- **Test Scripts**: Enhanced `test_api.sh` with prompt history validation
+
+### Technical Architecture
+- **Redis Storage Strategy**: Efficient storage using sorted sets for chronological access
+- **Async Architecture**: Full async/await support for all history operations  
+- **Error Resilience**: Graceful handling of Redis failures without breaking command processing
+- **Memory Management**: Automatic cleanup and TTL management for storage efficiency
+- **Performance Optimization**: Pagination support for large history datasets
+
+### Use Cases Enabled
+- **Debugging**: See exactly what prompts were sent to LLM and responses received
+- **Performance Analysis**: Track processing times and identify bottlenecks
+- **Response Comparison**: Re-run old prompts to see how LLM responses evolve
+- **Audit Trail**: Complete history of all AI interactions for compliance
+- **Template Testing**: Compare effectiveness of different prompt templates
+- **Source Analytics**: Understand usage patterns across different system components
+
+## [0.7.0] - 2025-10-03
+
+### Added - Advanced Command Processing Pipeline
+- **Complete 5-Step Processing Architecture**: Revolutionary command processing system
+  - **Step 1 - Template Determination**: Intelligent prompt template selection (currently defaults to 'default')
+  - **Step 2 - Data Fetching**: Automatic execution of template-specified data fetchers
+  - **Step 3 - Prompt Construction**: Dynamic assembly of system and user prompts with real-time context
+  - **Step 4 - LLM Processing**: Seamless Ollama integration with error handling and timeout management
+  - **Step 5 - Response Generation**: Structured responses with processing metadata and performance metrics
+- **Enhanced Command Processor Module** (`mcp/command_processor.py`)
+  - Modular pipeline with clear separation of concerns
+  - Comprehensive error handling for each pipeline stage
+  - Performance monitoring with millisecond-precision timing
+  - Structured logging for debugging and analytics
+  - Context management for prompt template variables
+- **Updated API Endpoint**: Complete redesign of `/api/command` endpoint
+  - Pipeline-based processing replacing legacy implementation
+  - Rich response format with success indicators and metadata
+  - Processing time metrics for performance monitoring
+  - Template and data fetcher execution tracking
+  - Source tracking for command origin identification
+- **Comprehensive Test Suite**: Complete test coverage for command processing
+  - 8 new test functions in `tests/test_command_processing.py`
+  - Success scenario testing with proper mocking
+  - Error handling validation for all failure modes
+  - Template determination and data fetcher execution testing
+  - LLM integration and response formatting validation
+  
+### Enhanced
+- **Documentation Updates**: Complete documentation refresh
+  - **API Documentation**: Enhanced `/api/command` endpoint documentation with pipeline details
+  - **cURL Examples**: Multiple command processing examples with expected responses
+  - **Test Scripts**: Enhanced `test_api.sh` with command pipeline testing including default template creation
+  - **README**: Added command processing pipeline section with architecture diagram and usage examples
+- **Error Handling**: Graceful error management throughout pipeline
+  - Template not found scenarios with clear error messages
+  - Data fetcher execution failures with fallback handling
+  - LLM communication errors with structured error responses
+  - Processing timeout management with performance tracking
+
+### Technical Architecture
+- **Pipeline Integration**: Seamless integration with existing MCP architecture
+  - Template system integration for dynamic prompt construction
+  - Data fetcher engine integration for real-time context gathering
+  - Ollama service integration with robust error handling
+  - Database logging for command history and analytics
+- **Performance Optimization**: Efficient processing with caching and optimization
+  - Redis caching integration for data fetcher results
+  - TTL management for cached data freshness
+  - Parallel data fetcher execution where applicable
+  - Structured response caching for repeated commands
+
+## [0.6.0] - 2025-10-03
+
+### Added
+- **Home Assistant Status Interface**: Beautiful web-based HA entity viewer
+  - **Comprehensive Entity Display**: All HA entities with state, attributes, and metadata
+  - **Smart Organization**: Grouped by domain (lights, switches, sensors, etc.)  
+  - **Advanced Filtering**: Real-time search and domain-based filtering
+  - **Statistics Dashboard**: Entity counts, availability status, domain breakdown
+  - **Responsive Design**: Mobile-friendly interface with Bootstrap 5
+  - **Visual State Indicators**: Color-coded status badges for entity states
+- **HA Entities API Endpoint**: New `/api/ha/entities` endpoint
+  - Redis cache integration for fast entity retrieval
+  - Fallback to direct HA API when cache unavailable
+  - Comprehensive error handling for connection issues
+  - Full entity data including state, attributes, timestamps
+- **Enhanced Navigation**: Unified navigation across admin interfaces
+  - Bootstrap navbar with responsive design
+  - Clear navigation between Dashboard and HA Status pages
+  - Visual icons and active state indicators
+
+### Fixed
+- **Critical DateTime Serialization**: Resolved 500 errors in rules API
+  - Fixed datetime field conversion to ISO string format
+  - Updated all CRUD endpoints (list, get, create, update)
+  - Proper handling of `created_at`, `updated_at`, `last_executed` fields
+  - Consistent JSON serialization across all rule endpoints
+
+### Updated
+- **Test Coverage**: Added comprehensive HA entities endpoint tests
+- **Documentation**: Updated API.md with new HA entities endpoint
+- **cURL Examples**: Added HA entities testing commands in curl.md
+- **Test Scripts**: Enhanced test_api.sh with HA entities validation
+
 ## [0.5.0] - 2025-10-03
 
 ### Added

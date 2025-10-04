@@ -8,7 +8,7 @@ Based on the project's design documents and current implementation, here are the
 *   **Conditional Logic (`check_state`):** The ability to handle commands with conditions (e.g., "If the living room is dark, turn on the light") is not yet implemented. The `action_executor.py` file has a placeholder comment indicating that this logic is missing.
 ~~*   **Redis Caching:** The design document specifies that Redis should be used to cache command responses to avoid unnecessary calls to Ollama. This caching logic has not been implemented in the `router.py` file.~~
 *   **Action History Endpoint:** The `GET /api/history/{entity_id}` endpoint, which is supposed to provide a history of actions for a specific device, has not been created.
-*   **Prompt History Endpoint:** An endpoint for the UI to read the `prompt_history` from the database or cache is also missing.
+*   ~~**Prompt History Endpoint:** An endpoint for the UI to read the `prompt_history` from the database or cache is also missing.~~ this is done, went with redis only for now.
 * ~~**Ollama Integration:** we need to inplement calling ollama correctly with chunking switched off.~~ done
 
 **User Interface:**

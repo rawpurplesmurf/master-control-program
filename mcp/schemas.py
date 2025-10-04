@@ -155,6 +155,32 @@ class CommandInput(BaseModel):
     command: str
     source: Optional[str] = "api"
 
+# Prompt History schemas
+class PromptHistoryOut(BaseModel):
+    id: str
+    prompt: str
+    response: str
+    source: str
+    timestamp: str
+    metadata: Dict[str, Any]
+
+class PromptHistoryStats(BaseModel):
+    total_interactions: int
+    source_distribution: Dict[str, int]
+    recent_count: int
+
+class PromptRerunRequest(BaseModel):
+    interaction_id: str
+
+class PromptRerunResponse(BaseModel):
+    success: bool
+    new_interaction_id: Optional[str] = None
+    original_interaction_id: Optional[str] = None
+    response: Optional[str] = None
+    processing_time_ms: Optional[int] = None
+    error: Optional[str] = None
+    source: Optional[str] = "api"
+
 class ExecutedAction(BaseModel):
     service: str
     entity_id: str

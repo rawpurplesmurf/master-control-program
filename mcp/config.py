@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     # Ollama
     OLLAMA_URL: str
+    OLLAMA_MODEL: str = "mistral"
 
     # MySQL Database
     MYSQL_HOST: str

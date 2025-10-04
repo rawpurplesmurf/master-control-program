@@ -4,11 +4,13 @@ from typing import List, Optional
 import json
 import asyncio
 import datetime
+import logging
 
 from mcp import schemas, models
 from mcp.database import get_db
 from mcp.ollama import create_ollama_prompt, call_ollama
 from mcp.action_executor import execute_actions
+from mcp.prompt_history import prompt_history_manager
 from mcp.health_checks import (
     check_mysql_connection,
     check_redis_connection,
@@ -17,6 +19,7 @@ from mcp.health_checks import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Helper function to format prompt template response
 def _format_prompt_template_response(template):
@@ -158,12 +161,20 @@ def list_rules(db: Session = Depends(get_db), rule_type: Optional[str] = None):
         query = query.filter(models.Rule.rule_type == rule_type)
     rules = query.all()
     
-    # Parse JSON fields for response
+    # Parse JSON fields and convert datetime fields for response
     for rule in rules:
         rule.blocked_actions = json.loads(rule.blocked_actions or '[]')
         rule.guard_conditions = json.loads(rule.guard_conditions or '{}')
         rule.trigger_conditions = json.loads(rule.trigger_conditions or '{}')
         rule.target_actions = json.loads(rule.target_actions or '[]')
+        
+        # Convert datetime fields to strings
+        if rule.created_at:
+            rule.created_at = rule.created_at.isoformat()
+        if rule.updated_at:
+            rule.updated_at = rule.updated_at.isoformat()
+        if rule.last_executed:
+            rule.last_executed = rule.last_executed.isoformat()
     
     return rules
 
@@ -174,11 +185,19 @@ def get_rule(rule_id: int, db: Session = Depends(get_db)):
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
     
-    # Parse JSON fields
+    # Parse JSON fields and convert datetime fields
     rule.blocked_actions = json.loads(rule.blocked_actions or '[]')
     rule.guard_conditions = json.loads(rule.guard_conditions or '{}')
     rule.trigger_conditions = json.loads(rule.trigger_conditions or '{}')
     rule.target_actions = json.loads(rule.target_actions or '[]')
+    
+    # Convert datetime fields to strings
+    if rule.created_at:
+        rule.created_at = rule.created_at.isoformat()
+    if rule.updated_at:
+        rule.updated_at = rule.updated_at.isoformat()
+    if rule.last_executed:
+        rule.last_executed = rule.last_executed.isoformat()
     
     return rule
 
@@ -203,11 +222,19 @@ def create_rule(rule: schemas.RuleCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_rule)
         
-        # Parse JSON fields for response
+        # Parse JSON fields and convert datetime fields for response
         db_rule.blocked_actions = json.loads(db_rule.blocked_actions or '[]')
         db_rule.guard_conditions = json.loads(db_rule.guard_conditions or '{}')
         db_rule.trigger_conditions = json.loads(db_rule.trigger_conditions or '{}')
         db_rule.target_actions = json.loads(db_rule.target_actions or '[]')
+        
+        # Convert datetime fields to strings
+        if db_rule.created_at:
+            db_rule.created_at = db_rule.created_at.isoformat()
+        if db_rule.updated_at:
+            db_rule.updated_at = db_rule.updated_at.isoformat()
+        if db_rule.last_executed:
+            db_rule.last_executed = db_rule.last_executed.isoformat()
         
     except Exception as e:
         db.rollback()
@@ -245,11 +272,19 @@ def update_rule(rule_id: int = Path(...), rule: schemas.RuleUpdate = None, db: S
         db.commit()
         db.refresh(db_rule)
         
-        # Parse JSON fields for response
+        # Parse JSON fields and convert datetime fields for response
         db_rule.blocked_actions = json.loads(db_rule.blocked_actions or '[]')
         db_rule.guard_conditions = json.loads(db_rule.guard_conditions or '{}')
         db_rule.trigger_conditions = json.loads(db_rule.trigger_conditions or '{}')
         db_rule.target_actions = json.loads(db_rule.target_actions or '[]')
+        
+        # Convert datetime fields to strings
+        if db_rule.created_at:
+            db_rule.created_at = db_rule.created_at.isoformat()
+        if db_rule.updated_at:
+            db_rule.updated_at = db_rule.updated_at.isoformat()
+        if db_rule.last_executed:
+            db_rule.last_executed = db_rule.last_executed.isoformat()
         
     except Exception as e:
         db.rollback()
@@ -408,52 +443,210 @@ def _format_data_fetcher_response(fetcher) -> dict:
 async def health_homeassistant():
     return await health_ha()
 
-@router.post("/api/command", response_model=schemas.CommandSuccess, responses={400: {"model": schemas.CommandError}, 500: {"model": schemas.CommandError}})
-async def process_command(command_input: schemas.CommandInput, db: Session = Depends(get_db)):
+# --- Home Assistant Entities Endpoint ---
+@router.get("/api/ha/entities", tags=["home-assistant"])
+async def get_ha_entities():
+    """Get all Home Assistant entities from Redis cache"""
     try:
-        # 1. Retrieve entities and rules
-        entities = db.query(models.Entity).all()
-        rules = db.query(models.Rule).all()
-        entity_dict = {e.friendly_name: e.entity_id for e in entities}
-        rules_list = [{
-            "rule_name": r.rule_name,
-            "trigger_entity": r.trigger_entity,
-            "target_entity": r.target_entity,
-            "override_keywords": r.override_keywords.split(',') if r.override_keywords else []
-        } for r in rules]
-
-        # 2. Create prompt and call Ollama
-        prompt = create_ollama_prompt(command_input.command, entity_dict, rules_list)
-        ollama_response = await call_ollama(prompt)
-
-        # 3. Process and execute actions
-        executed_actions = await execute_actions(ollama_response, rules_list, command_input.command)
-
-        # 4. Log history
-        history_entry = models.PromptHistory(
-            user_command=command_input.command,
-            ollama_response=json.dumps(ollama_response),
-            executed_actions=json.dumps([action.dict() for action in executed_actions]),
-            status="success"
-        )
-        db.add(history_entry)
-        db.commit()
-
-        return schemas.CommandSuccess(message="Command executed successfully.", executed_actions=executed_actions)
-
-    except HTTPException as e:
-        db.rollback()
-        # Log failure
-        history_entry = models.PromptHistory(user_command=command_input.command, ollama_response=getattr(e, 'detail', '{}'), executed_actions="[]", status="failed")
-        db.add(history_entry)
-        db.commit()
-        raise e
+        import redis
+        import json
+        import os
+        import requests
+        
+        # Get Redis connection
+        REDIS_URL = os.environ.get("REDIS_URL")
+        if not REDIS_URL:
+            host = os.environ.get("REDIS_HOST", "localhost")
+            port = os.environ.get("REDIS_PORT", "6379")
+            REDIS_URL = f"redis://{host}:{port}/0"
+        
+        r = redis.Redis.from_url(REDIS_URL)
+        
+        # Get cached entities
+        cached_entities = r.get("ha:entities")
+        if not cached_entities:
+            # If no cache, try to fetch directly from HA
+            HA_URL = os.environ.get("HA_URL", "http://localhost:8123")
+            HA_TOKEN = os.environ.get("HA_TOKEN", "your_long_lived_access_token")
+            
+            headers = {
+                "Authorization": f"Bearer {HA_TOKEN}",
+                "Content-Type": "application/json",
+            }
+            
+            resp = requests.get(f"{HA_URL}/api/states", headers=headers, timeout=10)
+            resp.raise_for_status()
+            all_entities = resp.json()
+            
+            # Cache the result for future requests
+            r.set("ha:entities", json.dumps(all_entities), ex=60)  # Cache for 1 minute
+            return all_entities
+        
+        entities = json.loads(cached_entities)
+        return entities
+        
+    except redis.RedisError as e:
+        raise HTTPException(status_code=503, detail=f"Redis connection error: {str(e)}")
+    except requests.RequestException as e:
+        raise HTTPException(status_code=503, detail=f"Home Assistant connection error: {str(e)}")
     except Exception as e:
-        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error fetching HA entities: {str(e)}")
+
+@router.post("/api/command")
+async def process_command(command_input: schemas.CommandInput, db: Session = Depends(get_db)):
+    """
+    Process a natural language command through the complete MCP pipeline.
+    
+    This endpoint:
+    1. Determines which prompt template to use (hardcoded to 'default' for now)
+    2. Executes all required data fetchers for the template
+    3. Constructs the prompt with fetched data
+    4. Sends the prompt to the LLM
+    5. Returns the LLM response with metadata
+    
+    Future enhancements will include:
+    - Intent matching to automatically select the best template
+    - Guardrail evaluation to prevent inappropriate actions
+    - Action execution for commands that require HA interaction
+    """
+    logger.info(f"Received command: {command_input.command}")
+    
+    try:
+        from mcp.command_processor import process_command_pipeline
+        
+        # Process through the complete pipeline
+        result = await process_command_pipeline(command_input.command, db, source=command_input.source)
+        
+        # Log command history for auditing
+        try:
+            history_entry = models.PromptHistory(
+                user_command=command_input.command,
+                ollama_response=result.get("response", ""),
+                executed_actions="[]",  # Will be updated when action execution is implemented
+                status="success" if result.get("success", False) else "failed"
+            )
+            db.add(history_entry)
+            db.commit()
+        except Exception as history_error:
+            logger.error(f"Failed to log command history: {history_error}")
+            # Don't fail the request if history logging fails
+        
+        logger.info(f"Command processing result: {result.get('success', False)}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in command endpoint: {str(e)}", exc_info=True)
+        
         # Log failure
-        history_entry = models.PromptHistory(user_command=command_input.command, ollama_response="{}", executed_actions="[]", status="failed")
-        db.add(history_entry)
-        db.commit()
-        # It's good practice to not expose raw exception details to the client
-        # In a production environment, log the full error `e` for debugging
-        raise HTTPException(status_code=500, detail="An internal error occurred.")
+        try:
+            history_entry = models.PromptHistory(
+                user_command=command_input.command, 
+                ollama_response=f"Error: {str(e)}", 
+                executed_actions="[]", 
+                status="failed"
+            )
+            db.add(history_entry)
+            db.commit()
+        except Exception as history_error:
+            logger.error(f"Failed to log error history: {history_error}")
+        
+        return {
+            "response": f"I'm sorry, I encountered an unexpected error: {str(e)}",
+            "error": "command_endpoint_error",
+            "success": False
+        }
+
+# Prompt History Endpoints
+@router.get("/api/prompt-history", response_model=List[schemas.PromptHistoryOut])
+async def get_prompt_history(
+    limit: int = 100,
+    offset: int = 0,
+    source: Optional[str] = None
+):
+    """
+    Get prompt history with optional filtering and pagination.
+    
+    Query Parameters:
+    - limit: Maximum number of interactions to return (default: 100)
+    - offset: Number of interactions to skip for pagination (default: 0)
+    - source: Filter by source (api, skippy, submind, rerun, manual)
+    """
+    try:
+        interactions = await prompt_history_manager.get_prompt_history(
+            limit=limit,
+            offset=offset,
+            source_filter=source
+        )
+        return interactions
+    except Exception as e:
+        logger.error(f"Error retrieving prompt history: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving prompt history: {str(e)}")
+
+@router.get("/api/prompt-history/stats", response_model=schemas.PromptHistoryStats)
+async def get_prompt_history_stats():
+    """
+    Get statistics about prompt history including total count and source distribution.
+    """
+    try:
+        stats = await prompt_history_manager.get_history_stats()
+        return stats
+    except Exception as e:
+        logger.error(f"Error retrieving prompt history stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving prompt history stats: {str(e)}")
+
+@router.get("/api/prompt-history/{interaction_id}", response_model=schemas.PromptHistoryOut)
+async def get_prompt_interaction(interaction_id: str):
+    """
+    Get a specific prompt interaction by ID.
+    """
+    try:
+        interaction = await prompt_history_manager.get_prompt_interaction(interaction_id)
+        if not interaction:
+            raise HTTPException(status_code=404, detail=f"Prompt interaction {interaction_id} not found")
+        return interaction
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving prompt interaction {interaction_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving prompt interaction: {str(e)}")
+
+@router.post("/api/prompt-history/{interaction_id}/rerun", response_model=schemas.PromptRerunResponse)
+async def rerun_prompt_interaction(interaction_id: str):
+    """
+    Re-run a previous prompt interaction with the same prompt.
+    
+    This will:
+    1. Retrieve the original prompt
+    2. Send it to the LLM again
+    3. Store the new interaction
+    4. Return the new response
+    """
+    try:
+        result = await prompt_history_manager.rerun_prompt_interaction(interaction_id)
+        
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error re-running prompt interaction {interaction_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error re-running prompt interaction: {str(e)}")
+
+@router.delete("/api/prompt-history/{interaction_id}")
+async def delete_prompt_interaction(interaction_id: str):
+    """
+    Delete a specific prompt interaction from history.
+    """
+    try:
+        deleted = await prompt_history_manager.delete_prompt_interaction(interaction_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail=f"Prompt interaction {interaction_id} not found")
+        
+        return {"message": f"Prompt interaction {interaction_id} deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting prompt interaction {interaction_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting prompt interaction: {str(e)}")

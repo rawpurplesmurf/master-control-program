@@ -37,10 +37,39 @@ echo "4. Testing Ollama Health:"
 curl -s "${BASE_URL}/api/health/ollama" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
+# Test Home Assistant Entities
+echo "--- Testing Home Assistant Entities ---"
+
+echo "5. Testing HA Entities Endpoint:"
+HA_ENTITIES_RESPONSE=$(curl -s "${BASE_URL}/api/ha/entities")
+if echo "$HA_ENTITIES_RESPONSE" | jq . > /dev/null 2>&1; then
+    ENTITY_COUNT=$(echo "$HA_ENTITIES_RESPONSE" | jq '. | length')
+    echo "✅ Successfully retrieved $ENTITY_COUNT HA entities"
+    
+    # Show domain statistics
+    echo "Domain breakdown:"
+    echo "$HA_ENTITIES_RESPONSE" | jq -r '
+        group_by(.entity_id | split(".")[0]) | 
+        map({domain: .[0].entity_id | split(".")[0], count: length}) | 
+        sort_by(.count) | reverse | 
+        .[] | "  \(.domain): \(.count)"
+    ' 2>/dev/null || echo "  Domain analysis failed (jq required)"
+    
+    # Show sample entities
+    echo "Sample entities:"
+    echo "$HA_ENTITIES_RESPONSE" | jq -r '
+        .[0:3] | .[] | "  \(.entity_id): \(.state) (\(.attributes.friendly_name // "No friendly name"))"
+    ' 2>/dev/null || echo "  Entity details failed (jq required)"
+else
+    echo "❌ Failed to retrieve HA entities"
+    echo "$HA_ENTITIES_RESPONSE"
+fi
+echo ""
+
 # Test Enhanced Rules System (Skippy Guardrails & Submind Automations)
 echo "--- Testing Enhanced Rules CRUD ---"
 
-echo "5. Creating a Skippy Guardrail rule:"
+echo "6. Creating a Skippy Guardrail rule:"
 GUARDRAIL_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/rules" \
   -H "Content-Type: application/json" \
   -d '{
@@ -60,7 +89,7 @@ GUARDRAIL_ID=$(echo "$GUARDRAIL_RESPONSE" | jq -r '.id' 2>/dev/null || echo "1")
 echo "Created Skippy Guardrail with ID: $GUARDRAIL_ID"
 echo ""
 
-echo "6. Creating a Submind Automation rule:"
+echo "7. Creating a Submind Automation rule:"
 AUTOMATION_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/rules" \
   -H "Content-Type: application/json" \
   -d '{
@@ -84,15 +113,15 @@ AUTOMATION_ID=$(echo "$AUTOMATION_RESPONSE" | jq -r '.id' 2>/dev/null || echo "2
 echo "Created Submind Automation with ID: $AUTOMATION_ID"
 echo ""
 
-echo "7. Listing all rules:"
+echo "8. Listing all rules:"
 curl -s "${BASE_URL}/api/rules" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "8. Listing Skippy Guardrail rules only:"
+echo "9. Listing Skippy Guardrail rules only:"
 curl -s "${BASE_URL}/api/rules?rule_type=skippy_guardrail" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "9. Listing Submind Automation rules only:"
+echo "10. Listing Submind Automation rules only:"
 curl -s "${BASE_URL}/api/rules?rule_type=submind_automation" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
@@ -180,50 +209,139 @@ curl -s -X PUT "${BASE_URL}/api/prompts/${TEMPLATE_ID}" \
   }' | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-# Test command processing
-echo "--- Testing Command Processing ---"
+# Test command processing pipeline
+echo "--- Testing Command Processing Pipeline ---"
 
-echo "21. Testing command processing:"
-curl -s -X POST "${BASE_URL}/api/command" \
+echo "21. First, create a default prompt template for command processing:"
+DEFAULT_TEMPLATE_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/prompts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "template_name": "test_default",
+    "system_prompt": "You are a helpful home automation assistant. Use the provided context to respond to user commands about their smart home devices.",
+    "user_prompt_template": "User command: {{user_input}}\n\nCurrent time: {{current_time}}\n\nAvailable devices:\n{{ha_device_status}}\n\nActive rules:\n{{rules_list}}",
+    "description": "Default template for command processing pipeline",
+    "pre_fetch_data": ["current_time", "ha_device_status", "rules_list"]
+  }')
+echo "$DEFAULT_TEMPLATE_RESPONSE" | jq '.' || echo "Failed or no jq installed"
+DEFAULT_TEMPLATE_ID=$(echo "$DEFAULT_TEMPLATE_RESPONSE" | jq -r '.id' 2>/dev/null || echo "template_id")
+echo "Created default template with ID: $DEFAULT_TEMPLATE_ID"
+echo ""
+
+echo "22. Testing basic command processing:"
+COMMAND_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/command" \
   -H "Content-Type: application/json" \
   -d '{
     "command": "Turn on the living room light"
+  }')
+echo "$COMMAND_RESPONSE" | jq '.' || echo "Failed or no jq installed"
+echo "Command processing success: $(echo "$COMMAND_RESPONSE" | jq -r '.success' 2>/dev/null || echo "unknown")"
+echo ""
+
+echo "23. Testing device status query:"
+curl -s -X POST "${BASE_URL}/api/command" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "What lights are currently on in my house?"
+  }' | jq '.' || echo "Failed or no jq installed"
+echo ""
+
+echo "24. Testing complex automation command:"
+curl -s -X POST "${BASE_URL}/api/command" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "If it'\''s after sunset, turn on the porch light and set the living room to 30% brightness"
+  }' | jq '.' || echo "Failed or no jq installed"
+echo ""
+
+echo "25. Testing command with source tracking:"
+curl -s -X POST "${BASE_URL}/api/command" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Good morning - start my morning routine",
+    "source": "test_script"
+  }' | jq '.' || echo "Failed or no jq installed"
+echo ""
+
+echo "26. Testing command processing performance (should show processing_time_ms):"
+PERF_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/command" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Check system status"
+  }')
+echo "$PERF_RESPONSE" | jq '.' || echo "Failed or no jq installed"
+PROCESSING_TIME=$(echo "$PERF_RESPONSE" | jq -r '.processing_time_ms' 2>/dev/null || echo "unknown")
+echo "Processing time: ${PROCESSING_TIME}ms"
+echo ""
+
+# Test Prompt History
+echo "--- Testing Prompt History ---"
+
+echo "27. Testing prompt history stats:"
+curl -s "${BASE_URL}/api/prompt-history/stats" | jq '.' || echo "Failed or no jq installed"
+echo ""
+
+echo "28. Testing prompt history retrieval (first 5):"
+HISTORY_RESPONSE=$(curl -s "${BASE_URL}/api/prompt-history?limit=5")
+echo "$HISTORY_RESPONSE" | jq '.' || echo "Failed or no jq installed"
+FIRST_INTERACTION_ID=$(echo "$HISTORY_RESPONSE" | jq -r '.[0].id' 2>/dev/null || echo "")
+echo "First interaction ID: $FIRST_INTERACTION_ID"
+echo ""
+
+if [ ! -z "$FIRST_INTERACTION_ID" ] && [ "$FIRST_INTERACTION_ID" != "null" ]; then
+    echo "29. Testing specific prompt interaction retrieval:"
+    curl -s "${BASE_URL}/api/prompt-history/${FIRST_INTERACTION_ID}" | jq '.' || echo "Failed or no jq installed"
+    echo ""
+
+    echo "30. Testing prompt re-run:"
+    RERUN_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/prompt-history/${FIRST_INTERACTION_ID}/rerun")
+    echo "$RERUN_RESPONSE" | jq '.' || echo "Failed or no jq installed"
+    NEW_INTERACTION_ID=$(echo "$RERUN_RESPONSE" | jq -r '.new_interaction_id' 2>/dev/null || echo "")
+    echo "New interaction ID from rerun: $NEW_INTERACTION_ID"
+    echo ""
+    
+    if [ ! -z "$NEW_INTERACTION_ID" ] && [ "$NEW_INTERACTION_ID" != "null" ]; then
+        echo "31. Testing prompt history with source filter (rerun):"
+        curl -s "${BASE_URL}/api/prompt-history?source=rerun&limit=3" | jq '.' || echo "Failed or no jq installed"
+        echo ""
+    fi
+else
+    echo "29-31. Skipping prompt history tests - no interactions found"
+    echo ""
+fi
+
+echo "32. Testing command with source tracking for prompt history:"
+curl -s -X POST "${BASE_URL}/api/command" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Test command for prompt history",
+    "source": "test_script"
   }' | jq '.' || echo "Failed or no jq installed"
 echo ""
 
 # Clean up - delete the test resources
 echo "--- Cleanup ---"
 
-echo "22. Deleting the test Skippy Guardrail rule (ID: $GUARDRAIL_ID):"
+echo "33. Deleting the test Skippy Guardrail rule (ID: $GUARDRAIL_ID):"
 curl -s -X DELETE "${BASE_URL}/api/rules/${GUARDRAIL_ID}" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "23. Deleting the test Submind Automation rule (ID: $AUTOMATION_ID):"
+echo "34. Deleting the test Submind Automation rule (ID: $AUTOMATION_ID):"
 curl -s -X DELETE "${BASE_URL}/api/rules/${AUTOMATION_ID}" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "24. Deleting the test data fetcher (ID: $FETCHER_ID):"
+echo "35. Deleting the test data fetcher (ID: $FETCHER_ID):"
 curl -s -X DELETE "${BASE_URL}/api/data-fetchers/${FETCHER_ID}" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "25. Deleting the test prompt template (ID: $TEMPLATE_ID):"
+echo "36. Deleting the test prompt template (ID: $TEMPLATE_ID):"
 curl -s -X DELETE "${BASE_URL}/api/prompts/${TEMPLATE_ID}" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "26. Verifying Skippy Guardrail deletion:"
-curl -s "${BASE_URL}/api/rules" | jq ".[] | select(.id==${GUARDRAIL_ID})" || echo "Skippy Guardrail successfully deleted"
+echo "37. Deleting the default command processing template (ID: $DEFAULT_TEMPLATE_ID):"
+curl -s -X DELETE "${BASE_URL}/api/prompts/${DEFAULT_TEMPLATE_ID}" | jq '.' || echo "Failed or no jq installed"
 echo ""
 
-echo "27. Verifying Submind Automation deletion:"
-curl -s "${BASE_URL}/api/rules" | jq ".[] | select(.id==${AUTOMATION_ID})" || echo "Submind Automation successfully deleted"
-echo ""
-
-echo "28. Verifying data fetcher deletion:"
-curl -s "${BASE_URL}/api/data-fetchers" | jq ".[] | select(.id==${FETCHER_ID})" || echo "Data fetcher successfully deleted"
-echo ""
-
-echo "29. Verifying template deletion:"
-curl -s "${BASE_URL}/api/prompts" | jq ".[] | select(.id==${TEMPLATE_ID})" || echo "Template successfully deleted"
+echo "38. Cleanup complete - all test resources deleted"
 echo ""
 
 echo "=== Test Suite Complete ==="

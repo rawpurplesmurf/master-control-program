@@ -82,13 +82,77 @@ curl -X POST http://localhost:8000/api/rules/2/execute
 curl -X DELETE http://localhost:8000/api/rules/1
 ```
 
-## Create a Command
-```
+## Command Processing Pipeline
+
+### Basic Command Processing
+```bash
 curl -X POST http://localhost:8000/api/command \
   -H "Content-Type: application/json" \
   -d '{
     "command": "Turn on the living room light"
   }'
+```
+
+### Natural Language Device Query
+```bash
+curl -X POST http://localhost:8000/api/command \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "What lights are currently on in my house?"
+  }'
+```
+
+### Complex Home Automation Command
+```bash
+curl -X POST http://localhost:8000/api/command \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "If it'\''s after sunset, turn on the porch light and set the living room to 30% brightness"
+  }'
+```
+
+### Weather-Based Automation
+```bash
+curl -X POST http://localhost:8000/api/command \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Check if it'\''s raining and close any open windows if so"
+  }'
+```
+
+### Command with Source Tracking
+```bash
+curl -X POST http://localhost:8000/api/command \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Good morning - start my morning routine",
+    "source": "mobile_app"
+  }'
+```
+
+### Example Response (Success)
+The API will return a response like:
+```json
+{
+  "response": "I've turned on the living room light for you.",
+  "success": true,
+  "template_used": "default",
+  "data_fetchers_executed": ["current_time", "ha_device_status", "rules_list"],
+  "processing_time_ms": 850,
+  "context_keys": ["user_input", "current_time", "ha_device_status", "rules_list"]
+}
+```
+
+### Example Response (Error)
+If there's an issue, you might see:
+```json
+{
+  "response": "Error: Prompt template 'default' not found. Please create a 'default' template first.",
+  "success": false,
+  "error": "template_not_found",
+  "template_requested": "default",
+  "processing_time_ms": 25
+}
 ```
 ## Healthcheck Endpoints
 ### Check Home Assistant
@@ -109,6 +173,35 @@ curl http://localhost:8000/api/health/ollama
 ### Check Database
 ```
 curl http://localhost:8000/api/health/db
+```
+
+## Home Assistant Entities
+### Get All HA Entities
+```bash
+curl http://localhost:8000/api/ha/entities
+```
+
+### Get HA Entities with Pretty JSON
+```bash
+curl -s http://localhost:8000/api/ha/entities | python -m json.tool
+```
+
+### Count Total Entities
+```bash
+curl -s http://localhost:8000/api/ha/entities | python -c "import sys, json; print(f'Total entities: {len(json.load(sys.stdin))}')"
+```
+
+### Get Entities by Domain
+```bash
+# Get only light entities
+curl -s http://localhost:8000/api/ha/entities | python -c "
+import sys, json
+entities = json.load(sys.stdin)
+lights = [e for e in entities if e['entity_id'].startswith('light.')]
+print(f'Light entities: {len(lights)}')
+for light in lights[:5]:  # Show first 5
+    print(f'  {light[\"entity_id\"]}: {light[\"state\"]}')
+"
 ```
 
 ## Prompt Templates
@@ -196,4 +289,96 @@ curl http://localhost:8000/api/data-fetchers/current_time/test
 ### Refresh a Data Fetcher (Force cache refresh)
 ```
 curl -X POST http://localhost:8000/api/data-fetchers/current_time/refresh
+```
+
+## Prompt History
+
+### Get Prompt History (All Interactions)
+```bash
+curl http://localhost:8000/api/prompt-history
+```
+
+### Get Prompt History with Pagination
+```bash
+curl "http://localhost:8000/api/prompt-history?limit=25&offset=50"
+```
+
+### Filter Prompt History by Source
+```bash
+# Get only API interactions
+curl "http://localhost:8000/api/prompt-history?source=api"
+
+# Get only Skippy interactions
+curl "http://localhost:8000/api/prompt-history?source=skippy"
+
+# Get only Submind interactions  
+curl "http://localhost:8000/api/prompt-history?source=submind"
+
+# Get only re-run interactions
+curl "http://localhost:8000/api/prompt-history?source=rerun"
+```
+
+### Get Prompt History Statistics
+```bash
+curl http://localhost:8000/api/prompt-history/stats
+```
+
+### Get Specific Prompt Interaction
+```bash
+curl http://localhost:8000/api/prompt-history/1696345678000
+```
+
+### Re-run a Previous Prompt
+```bash
+curl -X POST http://localhost:8000/api/prompt-history/1696345678000/rerun
+```
+
+### Delete a Prompt Interaction
+```bash
+curl -X DELETE http://localhost:8000/api/prompt-history/1696345678000
+```
+
+### Example Response (Prompt History)
+```json
+[
+  {
+    "id": "1696345678000",
+    "prompt": "System: You are a helpful home automation assistant.\n\nUser: Turn on the living room light",
+    "response": "I'll turn on the living room light for you right away.",
+    "source": "api",
+    "timestamp": "2023-10-03T12:34:56+00:00",
+    "metadata": {
+      "template_used": "default",
+      "processing_time_ms": 1250,
+      "context_keys": ["user_input", "current_time", "ha_device_status"],
+      "command": "Turn on the living room light"
+    }
+  }
+]
+```
+
+### Example Response (Statistics)
+```json
+{
+  "total_interactions": 1247,
+  "source_distribution": {
+    "api": 856,
+    "skippy": 234,
+    "submind": 89,
+    "rerun": 45,
+    "manual": 23
+  },
+  "recent_count": 100
+}
+```
+
+### Example Response (Re-run)
+```json
+{
+  "success": true,
+  "new_interaction_id": "1696345678999",
+  "original_interaction_id": "1696345678000", 
+  "response": "I'll turn on the living room light for you right away.",
+  "processing_time_ms": 890
+}
 ```
