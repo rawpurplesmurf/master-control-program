@@ -6,7 +6,16 @@
 BASE_URL="http://localhost:8000"
 
 echo "=== MCP API Test Suite ==="
-echo "Testing all endpoints from curl.md"
+echo "Testing all endpoints with enhanced rules system"
+echo ""
+
+# Check if server is running
+if ! curl -s "${BASE_URL}/api/health/db" > /dev/null 2>&1; then
+    echo "❌ MCP server is not running at ${BASE_URL}"
+    echo "Please start the server with: python -m uvicorn mcp.main:app --host 127.0.0.1 --port 8000"
+    exit 1
+fi
+echo "✅ MCP server is running"
 echo ""
 
 # Test healthcheck endpoints first

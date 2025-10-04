@@ -187,15 +187,11 @@ def create_rule(rule: schemas.RuleCreate, db: Session = Depends(get_db)):
     """Create a new rule (skippy guardrail or submind automation)"""
     rule_data = rule.dict()
     
-    # Convert JSON fields to strings
-    if rule_data.get('blocked_actions'):
-        rule_data['blocked_actions'] = json.dumps(rule_data['blocked_actions'])
-    if rule_data.get('guard_conditions'):
-        rule_data['guard_conditions'] = json.dumps(rule_data['guard_conditions'])
-    if rule_data.get('trigger_conditions'):
-        rule_data['trigger_conditions'] = json.dumps(rule_data['trigger_conditions'])
-    if rule_data.get('target_actions'):
-        rule_data['target_actions'] = json.dumps(rule_data['target_actions'])
+    # Convert JSON fields to strings - handle None values properly
+    rule_data['blocked_actions'] = json.dumps(rule_data.get('blocked_actions') or [])
+    rule_data['guard_conditions'] = json.dumps(rule_data.get('guard_conditions') or {})
+    rule_data['trigger_conditions'] = json.dumps(rule_data.get('trigger_conditions') or {})
+    rule_data['target_actions'] = json.dumps(rule_data.get('target_actions') or [])
     
     # Convert boolean to integer for compatibility
     if 'is_active' in rule_data:

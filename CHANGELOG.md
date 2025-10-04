@@ -53,8 +53,18 @@
   - Proper serialization in create and update responses
   - Error handling for malformed JSON in input validation
 
+### Fixed
+- **Pydantic Schema Bug**: Fixed critical issue with mutable default values in schemas
+  - Removed `{}` and `[]` default values that caused "Python type dict cannot be converted" errors
+  - Changed all JSON field defaults to `None` to prevent shared mutable state
+  - Updated router JSON serialization to handle `None` values properly with fallbacks
+- **API Server Stability**: Improved error handling and data validation
+  - Enhanced JSON field processing in rule creation endpoint
+  - Better handling of optional fields with null values
+  - More robust type conversion for database compatibility
+
 ### Summary
-This release represents a complete transformation of the MCP rules system from a simple trigger-target model to a sophisticated two-type intelligent automation framework. The new system provides both preventive safety measures (Skippy Guardrails) and proactive automation capabilities (Submind Automations) with comprehensive JSON-based configuration, execution tracking, and a fully updated admin interface. All documentation, tests, and API examples have been updated to reflect the new architecture.
+This release represents a complete transformation of the MCP rules system from a simple trigger-target model to a sophisticated two-type intelligent automation framework. The new system provides both preventive safety measures (Skippy Guardrails) and proactive automation capabilities (Submind Automations) with comprehensive JSON-based configuration, execution tracking, and a fully updated admin interface. All documentation, tests, and API examples have been updated to reflect the new architecture. Critical schema bugs have been resolved to ensure stable API operation.
 
 ### Enhanced
 - **Pydantic Schemas**: Updated to support new rule structure with proper validation

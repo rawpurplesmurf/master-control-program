@@ -64,14 +64,14 @@ class RuleBase(BaseModel):
 class SkippyGuardrailCreate(RuleBase):
     rule_type: str = "skippy_guardrail"
     target_entity_pattern: Optional[str] = None
-    blocked_actions: Optional[List[str]] = []
-    guard_conditions: Optional[Dict[str, Any]] = {}
+    blocked_actions: Optional[List[str]] = None
+    guard_conditions: Optional[Dict[str, Any]] = None
     override_keywords: Optional[str] = None
 
 class SubmindAutomationCreate(RuleBase):
     rule_type: str = "submind_automation"
-    trigger_conditions: Optional[Dict[str, Any]] = {}
-    target_actions: Optional[List[Dict[str, Any]]] = []
+    trigger_conditions: Optional[Dict[str, Any]] = None
+    target_actions: Optional[List[Dict[str, Any]]] = None
     execution_schedule: Optional[str] = None
 
 class RuleCreate(BaseModel):
@@ -83,13 +83,13 @@ class RuleCreate(BaseModel):
     
     # Skippy Guardrail fields
     target_entity_pattern: Optional[str] = None
-    blocked_actions: Optional[List[str]] = []
-    guard_conditions: Optional[Dict[str, Any]] = {}
+    blocked_actions: Optional[List[str]] = None
+    guard_conditions: Optional[Dict[str, Any]] = None
     override_keywords: Optional[str] = None
     
     # Submind Automation fields
-    trigger_conditions: Optional[Dict[str, Any]] = {}
-    target_actions: Optional[List[Dict[str, Any]]] = []
+    trigger_conditions: Optional[Dict[str, Any]] = None
+    target_actions: Optional[List[Dict[str, Any]]] = None
     execution_schedule: Optional[str] = None
 
 class RuleUpdate(BaseModel):
@@ -120,13 +120,13 @@ class RuleOut(BaseModel):
     
     # Skippy Guardrail fields
     target_entity_pattern: Optional[str] = None
-    blocked_actions: Optional[List[str]] = []
-    guard_conditions: Optional[Dict[str, Any]] = {}
+    blocked_actions: Optional[List[str]] = None
+    guard_conditions: Optional[Dict[str, Any]] = None
     override_keywords: Optional[str] = None
     
     # Submind Automation fields
-    trigger_conditions: Optional[Dict[str, Any]] = {}
-    target_actions: Optional[List[Dict[str, Any]]] = []
+    trigger_conditions: Optional[Dict[str, Any]] = None
+    target_actions: Optional[List[Dict[str, Any]]] = None
     execution_schedule: Optional[str] = None
     
     # Metadata
