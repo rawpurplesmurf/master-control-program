@@ -97,6 +97,133 @@
             font-size: 0.875rem;
             color: #6c757d;
         }
+        
+        .control-buttons {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 60px;
+            position: relative;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .control-btn.executing {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .control-btn.executing::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        .btn-turn-on {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-turn-off {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-toggle {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-climate {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-cover {
+            background-color: #6f42c1;
+            color: white;
+        }
+        
+            .action-feedback {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 0.5rem;
+                border-radius: 0.25rem;
+                font-size: 0.875rem;
+                z-index: 10;
+            }
+            
+            .spin {
+                animation: spin 1s linear infinite;
+            }
+            
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            .control-btn.success {
+                background-color: #198754 !important;
+                border-color: #198754 !important;
+                color: white !important;
+            }
+            
+            .control-btn.error {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+                color: white !important;
+            }
+            
+            .control-btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }        .entity-controllable {
+            position: relative;
+        }
+        
+        .entity-controllable::before {
+            content: '\F4A1';
+            font-family: "Bootstrap Icons";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 0.75rem;
+            color: #28a745;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -352,8 +479,12 @@
                 });
             }
 
+            // Check if entity is controllable and add control buttons
+            const controlButtons = getControlButtons(entity, domain);
+            const controllableClass = controlButtons ? 'entity-controllable' : '';
+            
             col.innerHTML = `
-                <div class="card entity-card ${domain}">
+                <div class="card entity-card ${domain} ${controllableClass}">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h6 class="card-title mb-0">
@@ -364,6 +495,7 @@
                         </div>
                         <p class="card-text small text-muted mb-2">${entity.entity_id}</p>
                         ${attributesHtml ? `<div class="mb-2">${attributesHtml}</div>` : ''}
+                        ${controlButtons || ''}
                         <small class="text-muted">
                             <i class="bi bi-clock"></i> 
                             ${entity.last_changed ? new Date(entity.last_changed).toLocaleString() : 'Unknown'}
@@ -413,6 +545,275 @@
             } else {
                 return 'state-unknown';
             }
+        }
+
+        function getControlButtons(entity, domain) {
+            const entityId = entity.entity_id;
+            const state = entity.state;
+            
+            // Define controllable domains and their buttons
+            switch (domain) {
+                case 'light':
+                    if (state === 'on') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-off" onclick="controlDevice('${entityId}', 'turn_off')">
+                                    <i class="bi bi-lightbulb"></i> Turn Off
+                                </button>
+                            </div>
+                        `;
+                    } else if (state === 'off') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-on" onclick="controlDevice('${entityId}', 'turn_on')">
+                                    <i class="bi bi-lightbulb-fill"></i> Turn On
+                                </button>
+                            </div>
+                        `;
+                    }
+                    break;
+                
+                case 'switch':
+                case 'input_boolean':
+                    if (state === 'on') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-off" onclick="controlDevice('${entityId}', 'turn_off')">
+                                    <i class="bi bi-toggle-off"></i> Turn Off
+                                </button>
+                            </div>
+                        `;
+                    } else if (state === 'off') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-on" onclick="controlDevice('${entityId}', 'turn_on')">
+                                    <i class="bi bi-toggle-on"></i> Turn On
+                                </button>
+                            </div>
+                        `;
+                    }
+                    break;
+                
+                case 'cover':
+                    return `
+                        <div class="control-buttons">
+                            <button class="control-btn btn-cover" onclick="controlDevice('${entityId}', 'open_cover')">
+                                <i class="bi bi-arrow-up"></i> Open
+                            </button>
+                            <button class="control-btn btn-cover" onclick="controlDevice('${entityId}', 'close_cover')">
+                                <i class="bi bi-arrow-down"></i> Close
+                            </button>
+                        </div>
+                    `;
+                
+                case 'climate':
+                    return `
+                        <div class="control-buttons">
+                            <button class="control-btn btn-climate" onclick="controlDevice('${entityId}', 'turn_on')">
+                                <i class="bi bi-power"></i> Turn On
+                            </button>
+                            <button class="control-btn btn-climate" onclick="controlDevice('${entityId}', 'turn_off')">
+                                <i class="bi bi-power"></i> Turn Off
+                            </button>
+                        </div>
+                    `;
+                
+                case 'fan':
+                    if (state === 'on') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-off" onclick="controlDevice('${entityId}', 'turn_off')">
+                                    <i class="bi bi-fan"></i> Turn Off
+                                </button>
+                            </div>
+                        `;
+                    } else if (state === 'off') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-on" onclick="controlDevice('${entityId}', 'turn_on')">
+                                    <i class="bi bi-fan"></i> Turn On
+                                </button>
+                            </div>
+                        `;
+                    }
+                    break;
+                
+                case 'script':
+                case 'scene':
+                    return `
+                        <div class="control-buttons">
+                            <button class="control-btn btn-toggle" onclick="controlDevice('${entityId}', 'trigger')">
+                                <i class="bi bi-play-fill"></i> Run
+                            </button>
+                        </div>
+                    `;
+                
+                case 'automation':
+                    return `
+                        <div class="control-buttons">
+                            <button class="control-btn btn-toggle" onclick="controlDevice('${entityId}', 'trigger')">
+                                <i class="bi bi-play-fill"></i> Trigger
+                            </button>
+                        </div>
+                    `;
+                
+                case 'lock':
+                    if (state === 'locked') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-off" onclick="controlDevice('${entityId}', 'unlock')">
+                                    <i class="bi bi-unlock"></i> Unlock
+                                </button>
+                            </div>
+                        `;
+                    } else if (state === 'unlocked') {
+                        return `
+                            <div class="control-buttons">
+                                <button class="control-btn btn-turn-on" onclick="controlDevice('${entityId}', 'lock')">
+                                    <i class="bi bi-lock-fill"></i> Lock
+                                </button>
+                            </div>
+                        `;
+                    }
+                    break;
+            }
+            
+            return null; // No control buttons for this entity
+        }
+
+        async function controlDevice(entityId, action) {
+            const button = event.target.closest('.control-btn');
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.classList.add('loading');
+            button.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Working...';
+            button.disabled = true;
+            
+            try {
+                // Build proper service name from entity domain and action
+                const domain = entityId.split('.')[0];
+                let service;
+                
+                // Map actions to proper service calls
+                switch (action) {
+                    case 'turn_on':
+                    case 'turn_off':
+                    case 'toggle':
+                        service = `${domain}.${action}`;
+                        break;
+                    case 'open_cover':
+                    case 'close_cover':
+                    case 'stop_cover':
+                        service = `cover.${action.replace('_cover', '_cover')}`;
+                        break;
+                    case 'lock':
+                    case 'unlock':
+                        service = `lock.${action}`;
+                        break;
+                    case 'trigger':
+                        // For scripts, scenes, automations
+                        if (domain === 'script' || domain === 'scene') {
+                            service = `${domain}.${entityId.split('.')[1]}`;
+                        } else if (domain === 'automation') {
+                            service = `automation.trigger`;
+                        } else {
+                            service = `homeassistant.turn_on`;
+                        }
+                        break;
+                    default:
+                        service = `${domain}.${action}`;
+                }
+                
+                console.log(`🎯 Sending action: ${service} to ${entityId}`);
+                
+                const actionPayload = {
+                    service: service,
+                    entity_id: entityId
+                };
+                
+                const response = await fetch('/api/ha/action', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(actionPayload)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Action failed');
+                }
+                
+                const result = await response.json();
+                console.log('✅ Action result:', result);
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Action execution failed');
+                }
+                
+                // Show success feedback
+                button.classList.remove('loading');
+                button.classList.add('success');
+                button.innerHTML = '<i class="bi bi-check-circle"></i> Done!';
+                
+                console.log('✅ Action succeeded:', result);
+                showAlert(`✅ ${service} executed successfully on ${entityId}`, 'success');
+                
+                // Reset button immediately and update UI optimistically
+                setTimeout(() => {
+                    button.classList.remove('success');
+                    button.disabled = false;
+                    
+                    // Update button state optimistically based on action
+                    updateButtonAfterAction(button, entityId, action);
+                    
+                }, 800); // Much shorter delay
+                
+                // Refresh entity data in background after server has time to update cache (6 seconds)
+                setTimeout(() => {
+                    refreshSingleEntity(entityId);
+                }, 6000);
+                
+            } catch (error) {
+                console.error('❌ Control device error:', error);
+                
+                // Show error feedback
+                button.classList.remove('loading');
+                button.classList.add('error');
+                button.innerHTML = '<i class="bi bi-exclamation-circle"></i> Error';
+                
+                // Show error message
+                showAlert(`Failed to control ${entityId}: ${error.message}`, 'danger');
+                
+                // Reset button after delay
+                setTimeout(() => {
+                    button.classList.remove('error');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 3000);
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
         }
 
         function updateStatistics(entities) {
@@ -497,6 +898,105 @@
             document.getElementById('errorText').textContent = message;
             document.getElementById('errorMessage').style.display = 'block';
             document.getElementById('entitiesContainer').style.display = 'none';
+        }
+
+        // NEW: Function to update button state optimistically based on expected outcome
+        function updateButtonAfterAction(button, entityId, action) {
+            const domain = entityId.split('.')[0];
+            
+            // Predict new state and update button accordingly
+            switch (action) {
+                case 'turn_on':
+                    if (domain === 'light') {
+                        button.innerHTML = '<i class="bi bi-lightbulb"></i> Turn Off';
+                        button.className = 'control-btn btn-turn-off';
+                        button.onclick = () => controlDevice(entityId, 'turn_off');
+                    } else {
+                        button.innerHTML = '<i class="bi bi-toggle-off"></i> Turn Off';
+                        button.className = 'control-btn btn-turn-off';
+                        button.onclick = () => controlDevice(entityId, 'turn_off');
+                    }
+                    break;
+                    
+                case 'turn_off':
+                    if (domain === 'light') {
+                        button.innerHTML = '<i class="bi bi-lightbulb-fill"></i> Turn On';
+                        button.className = 'control-btn btn-turn-on';
+                        button.onclick = () => controlDevice(entityId, 'turn_on');
+                    } else {
+                        button.innerHTML = '<i class="bi bi-toggle-on"></i> Turn On';
+                        button.className = 'control-btn btn-turn-on';
+                        button.onclick = () => controlDevice(entityId, 'turn_on');
+                    }
+                    break;
+                    
+                case 'lock':
+                    button.innerHTML = '<i class="bi bi-unlock"></i> Unlock';
+                    button.className = 'control-btn btn-turn-off';
+                    button.onclick = () => controlDevice(entityId, 'unlock');
+                    break;
+                    
+                case 'unlock':
+                    button.innerHTML = '<i class="bi bi-lock-fill"></i> Lock';
+                    button.className = 'control-btn btn-turn-on';
+                    button.onclick = () => controlDevice(entityId, 'lock');
+                    break;
+            }
+        }
+
+        // NEW: Function to refresh single entity state without full page reload
+        async function refreshSingleEntity(entityId) {
+            try {
+                console.log(`🔄 Refreshing state for ${entityId}`);
+                
+                // Get fresh entity data
+                const response = await fetch(`/api/ha/entities`);
+                if (!response.ok) {
+                    console.warn('Could not refresh entity data');
+                    return;
+                }
+                
+                const entities = await response.json();
+                const entity = entities.find(e => e.entity_id === entityId);
+                
+                if (entity) {
+                    console.log(`✅ Updated state for ${entityId}: ${entity.state}`);
+                    
+                    // Find the entity card and update its state display
+                    const entityCards = document.querySelectorAll('.entity-card');
+                    entityCards.forEach(card => {
+                        const cardTitle = card.querySelector('.card-text');
+                        if (cardTitle && cardTitle.textContent === entityId) {
+                            // Update state badge
+                            const stateBadge = card.querySelector('.entity-state');
+                            if (stateBadge) {
+                                stateBadge.textContent = entity.state;
+                                stateBadge.className = `entity-state ${getStateClass(entity.state)}`;
+                            }
+                            
+                            // Update last changed time
+                            const timeElement = card.querySelector('small');
+                            if (timeElement && entity.last_changed) {
+                                timeElement.innerHTML = `<i class="bi bi-clock"></i> ${new Date(entity.last_changed).toLocaleString()}`;
+                            }
+                            
+                            // Update control buttons to match actual state
+                            const controlButtons = card.querySelector('.control-buttons');
+                            if (controlButtons) {
+                                const domain = entityId.split('.')[0];
+                                const newButtons = getControlButtons(entity, domain);
+                                if (newButtons) {
+                                    controlButtons.innerHTML = newButtons.replace('<div class="control-buttons">', '').replace('</div>', '');
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.warn(`Entity ${entityId} not found in refresh data`);
+                }
+            } catch (error) {
+                console.error('Error refreshing single entity:', error);
+            }
         }
     </script>
 </body>

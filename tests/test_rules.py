@@ -13,16 +13,30 @@ from mcp.database import get_db
 class MockRule:
     id: int
     rule_name: str
-    trigger_entity: str
-    target_entity: str
+    rule_type: str
+    description: str = None
+    is_active: int = 1
+    priority: int = 0
+    target_entity_pattern: str = None
+    blocked_actions: str = "[]"
+    guard_conditions: str = "{}"
+    trigger_conditions: str = "{}"
+    target_actions: str = "[]"
     override_keywords: str = None
+    execution_schedule: str = None
+    created_at: str = None
+    updated_at: str = None
+    last_executed: str = None
 
 @pytest.fixture
 def client():
     mock_db = MagicMock()
     rules = [
-        MockRule(1, "No lights after midnight", "skippy", "light.living_room", "manual,override"),
-        MockRule(2, "No AC if window open", "window_sensor", "climate.bedroom", None)
+        MockRule(id=1, rule_name="No lights after midnight", rule_type="skippy_guardrail", 
+                target_entity_pattern="light.living_room", override_keywords="manual,override"),
+        MockRule(id=2, rule_name="No AC if window open", rule_type="submind_automation",
+                trigger_conditions='{"entity_id": "binary_sensor.window", "state": "on"}',
+                target_actions='[{"service": "climate.turn_off", "entity_id": "climate.bedroom"}]')
     ]
     def query_side_effect(model):
         class Query:
@@ -64,8 +78,11 @@ def test_list_rules(client):
 def test_create_rule(client):
     rule = {
         "rule_name": "Test rule",
-        "trigger_entity": "sensor",
-        "target_entity": "light.test",
+        "rule_type": "skippy_guardrail",
+        "description": "Test rule description",
+        "target_entity_pattern": "light.test",
+        "blocked_actions": ["turn_on"],
+        "guard_conditions": {"time_range": {"from": "22:00", "to": "06:00"}},
         "override_keywords": "manual"
     }
     response = client.post("/api/rules", json=rule)

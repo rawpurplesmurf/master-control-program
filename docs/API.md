@@ -302,7 +302,130 @@ Prompt templates define structured templates for generating prompts with specifi
 
 ---
 
-### 4. `/api/data-fetchers` - Data Fetcher Management
+### 4. `/api/system-prompts` - System Prompt Management
+
+System prompts define the core behavior and personality of the LLM for different interaction modes. They support MCP function calling and can be dynamically switched through the admin interface.
+
+#### List All System Prompts
+
+* **Method:** `GET`
+* **Path:** `/api/system-prompts`
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "default_mcp",
+    "prompt": "You are a Home Assistant controller. You can either:\n1. Answer questions directly with natural language\n2. Execute actions using the provided functions\n\nFor direct questions, respond naturally.\nFor action requests, use the appropriate function calls.\n\nAvailable functions will be provided in the context.",
+    "description": "Default MCP system prompt with function calling capabilities",
+    "is_active": true,
+    "created_at": "2025-10-09T18:00:00Z",
+    "updated_at": "2025-10-09T18:00:00Z"
+  }
+]
+```
+
+#### Get Active System Prompt
+
+* **Method:** `GET`
+* **Path:** `/api/system-prompts/active`
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "default_mcp",
+  "prompt": "You are a Home Assistant controller...",
+  "description": "Default MCP system prompt with function calling capabilities",
+  "is_active": true
+}
+```
+
+#### Create System Prompt
+
+* **Method:** `POST`
+* **Path:** `/api/system-prompts`
+
+**Request Body:**
+```json
+{
+  "name": "custom_assistant",
+  "prompt": "You are a helpful Home Assistant controller with a friendly personality. Always greet users warmly and explain your actions clearly.",
+  "description": "Custom friendly assistant system prompt",
+  "is_active": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 6,
+  "name": "custom_assistant",
+  "prompt": "You are a helpful Home Assistant controller...",
+  "description": "Custom friendly assistant system prompt",
+  "is_active": false,
+  "message": "System prompt created successfully"
+}
+```
+
+#### Update System Prompt
+
+* **Method:** `PUT`
+* **Path:** `/api/system-prompts/{prompt_id}`
+
+**Request Body:**
+```json
+{
+  "description": "Updated description",
+  "is_active": true
+}
+```
+
+**Response:**
+```json
+{
+  "id": 6,
+  "name": "custom_assistant",
+  "prompt": "You are a helpful Home Assistant controller...",
+  "description": "Updated description", 
+  "is_active": true,
+  "message": "System prompt updated successfully"
+}
+```
+
+#### Activate System Prompt
+
+* **Method:** `POST`
+* **Path:** `/api/system-prompts/{prompt_id}/activate`
+
+**Response:**
+```json
+{
+  "message": "System prompt 'custom_assistant' is now active",
+  "active_prompt": {
+    "id": 6,
+    "name": "custom_assistant",
+    "description": "Updated description"
+  }
+}
+```
+
+#### Delete System Prompt
+
+* **Method:** `DELETE`
+* **Path:** `/api/system-prompts/{prompt_id}`
+
+**Response:**
+```json
+{
+  "message": "System prompt 'custom_assistant' deleted successfully"
+}
+```
+
+---
+
+### 5. `/api/data-fetchers` - Data Fetcher Management
 
 Data fetchers are configurable Python code blocks that retrieve specific data for prompt templates. Each fetcher has a unique key, description, TTL for caching, and Python code that executes safely.
 
@@ -607,5 +730,510 @@ The prompt history system automatically captures all LLM interactions:
 * **Response Comparison**: Re-run old prompts to see how responses change
 * **Audit Trail**: Complete history of all AI interactions
 * **Template Testing**: Compare responses across different prompt templates
+
+---
+
+## Home Assistant Entity Log Endpoints
+
+The entity logging system provides detailed tracking of Home Assistant entity state changes with real-time WebSocket integration and 7-day retention.
+
+### 1. `/api/ha/entities/log/{entity_id}` - Get Entity Change Log
+
+* **Method:** `GET`
+* **Description:** Retrieves chronological log of state changes for a specific Home Assistant entity.
+
+#### Parameters
+
+* `entity_id` (path, required): The Home Assistant entity ID (e.g., "light.living_room")
+* `limit` (query, optional): Maximum number of log entries to return (1-1000, default: 100)
+* `start_date` (query, optional): Start date in ISO format (e.g., "2025-10-01T00:00:00Z")
+* `end_date` (query, optional): End date in ISO format (e.g., "2025-10-03T23:59:59Z")
+
+#### Example Request
+```bash
+GET /api/ha/entities/log/light.living_room?limit=50&start_date=2025-10-01T00:00:00Z
+```
+
+#### Response
+```json
+{
+  "entity_id": "light.living_room",
+  "log_entries": [
+    {
+      "timestamp": "2025-10-03T12:00:00Z",
+      "entity_id": "light.living_room",
+      "old_state": {"state": "off", "attributes": {"brightness": null}},
+      "new_state": {"state": "on", "attributes": {"brightness": 255}},
+      "state_changed": true,
+      "attributes_changed": true
+    },
+    {
+      "timestamp": "2025-10-03T11:30:00Z",
+      "entity_id": "light.living_room", 
+      "old_state": {"state": "on", "attributes": {"brightness": 255}},
+      "new_state": {"state": "off", "attributes": {"brightness": null}},
+      "state_changed": true,
+      "attributes_changed": true
+    }
+  ],
+  "count": 2,
+  "limit": 50,
+  "start_date": "2025-10-01T00:00:00Z",
+  "end_date": null
+}
+```
+
+**Error Responses:**
+* **500 Internal Server Error** - Error retrieving entity log
+
+---
+
+### 2. `/api/ha/entities/log/{entity_id}/summary` - Get Entity Log Summary
+
+* **Method:** `GET`
+* **Description:** Provides statistical summary of entity state changes over a specified period.
+
+#### Parameters
+
+* `entity_id` (path, required): The Home Assistant entity ID
+* `days` (query, optional): Number of days to analyze (1-30, default: 7)
+
+#### Example Request
+```bash
+GET /api/ha/entities/log/light.living_room/summary?days=14
+```
+
+#### Response
+```json
+{
+  "entity_id": "light.living_room",
+  "total_changes": 45,
+  "state_changes": 22,
+  "attribute_changes": 38,
+  "change_frequency_per_day": 3.2,
+  "most_recent_change": {
+    "timestamp": "2025-10-03T12:00:00Z",
+    "entity_id": "light.living_room",
+    "state_changed": true,
+    "attributes_changed": true
+  }
+}
+```
+
+**Error Responses:**
+* **422 Unprocessable Entity** - Invalid days parameter
+* **500 Internal Server Error** - Error generating summary
+
+---
+
+### 3. `/api/ha/entities/logs` - Get All Logged Entities
+
+* **Method:** `GET`
+* **Description:** Returns list of all Home Assistant entities that have logged state changes.
+
+#### Parameters
+
+* `domain` (query, optional): Filter by entity domain (e.g., "light", "switch", "climate")
+
+#### Example Request
+```bash
+GET /api/ha/entities/logs?domain=light
+```
+
+#### Response
+```json
+{
+  "logged_entities": [
+    "light.living_room",
+    "light.kitchen", 
+    "light.bedroom",
+    "light.porch"
+  ],
+  "count": 4,
+  "domain_filter": "light"
+}
+```
+
+**Error Responses:**
+* **500 Internal Server Error** - Error retrieving logged entities
+
+---
+
+## Home Assistant Device Control API
+
+### 1. `/api/ha/services` - Get Available Services
+
+* **Method:** `GET`  
+* **Description:** Returns all available Home Assistant services with real-time data from the Home Assistant `/api/services` endpoint.
+
+#### Parameters
+
+* `refresh` (query, optional): Force refresh from Home Assistant (bypasses cache)
+* `domain` (query, optional): Filter services by specific domain (e.g., "light", "switch")
+
+#### Example Requests
+```bash
+# Get all services (cached)
+GET /api/ha/services
+
+# Force refresh from Home Assistant
+GET /api/ha/services?refresh=true
+
+# Get only light domain services
+GET /api/ha/services?domain=light
+```
+
+#### Response
+```json
+{
+  "services": {
+    "light": [
+      {
+        "service": "light.turn_on",
+        "name": "turn_on",
+        "description": "Turn the light on",
+        "fields": [
+          {
+            "name": "brightness",
+            "description": "Brightness level (0-255)",
+            "required": false,
+            "selector": {"number": {"min": 0, "max": 255}}
+          },
+          {
+            "name": "color_name", 
+            "description": "Color name",
+            "required": false,
+            "example": "red"
+          }
+        ],
+        "parameters": ["brightness", "color_name"]
+      },
+      {
+        "service": "light.turn_off",
+        "name": "turn_off", 
+        "description": "Turn the light off",
+        "fields": [],
+        "parameters": []
+      }
+    ],
+    "switch": [
+      {
+        "service": "switch.turn_on",
+        "name": "turn_on",
+        "description": "Turn the switch on", 
+        "fields": [],
+        "parameters": []
+      }
+    ]
+  },
+  "total_services": 3,
+  "total_domains": 2,
+  "last_updated": "2023-01-01T12:00:00Z",
+  "cached": true
+}
+```
+
+**Error Responses:**
+* **500 Internal Server Error** - Error retrieving services
+
+---
+
+### 2. `/api/ha/action` - Execute Home Assistant Action
+
+* **Method:** `POST`
+* **Description:** Execute an action on a Home Assistant device with validation and logging.
+
+#### Request Body
+
+```json
+{
+  "service": "light.turn_on",
+  "entity_id": "light.living_room", 
+  "data": {
+    "brightness": 255,
+    "color_name": "blue"
+  }
+}
+```
+
+#### Response
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "service": "light.turn_on",
+  "entity_id": "light.living_room",
+  "data": {
+    "entity_id": "light.living_room",
+    "brightness": 255,
+    "color_name": "blue"
+  },
+  "ha_response": [],
+  "service_info": {
+    "service": "light.turn_on",
+    "description": "Turn on light"
+  },
+  "timestamp": "2023-01-01T12:00:00Z"
+}
+```
+
+**Failure Response:**
+```json
+{
+  "success": false,
+  "error": "Entity light.nonexistent not found or not available",
+  "service": "light.turn_on",
+  "entity_id": "light.nonexistent"
+}
+```
+
+**Error Responses:**
+* **500 Internal Server Error** - Error executing action
+
+---
+
+### 3. `/api/ha/actions/bulk` - Execute Multiple Actions
+
+* **Method:** `POST`
+* **Description:** Execute multiple Home Assistant actions in sequence. Useful for scenes and automation sequences.
+
+#### Request Body
+
+```json
+[
+  {
+    "service": "light.turn_on",
+    "entity_id": "light.living_room",
+    "data": {"brightness": 255}
+  },
+  {
+    "service": "switch.turn_off", 
+    "entity_id": "switch.outlet"
+  },
+  {
+    "service": "climate.set_temperature",
+    "entity_id": "climate.thermostat",
+    "data": {"temperature": 72}
+  }
+]
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "total_actions": 3,
+  "successful_actions": 3,
+  "failed_actions": 0,
+  "results": [
+    {
+      "action_index": 0,
+      "action": {
+        "service": "light.turn_on",
+        "entity_id": "light.living_room"
+      },
+      "result": {
+        "success": true,
+        "service": "light.turn_on"
+      }
+    }
+  ],
+  "timestamp": "2023-01-01T12:00:00Z"
+}
+```
+
+**Error Responses:**
+* **400 Bad Request** - Too many actions (max 50)
+* **500 Internal Server Error** - Error executing actions
+
+---
+
+### 4. `/api/ha/entities/{entity_id}/actions` - Get Action History
+
+* **Method:** `GET`
+* **Description:** Get execution history for a specific entity with 7-day retention.
+
+#### Parameters
+
+* `entity_id` (path, required): The Home Assistant entity ID
+* `limit` (query, optional): Maximum actions to return (1-200, default: 50)
+
+#### Example Request
+```bash
+GET /api/ha/entities/light.living_room/actions?limit=10
+```
+
+#### Response
+```json
+{
+  "entity_id": "light.living_room",
+  "actions": [
+    {
+      "timestamp": "2023-01-01T12:00:00Z",
+      "action": {
+        "service": "light.turn_on",
+        "entity_id": "light.living_room",
+        "data": {"brightness": 255}
+      },
+      "result": {
+        "success": true,
+        "ha_response": []
+      },
+      "old_state": {
+        "state": "off",
+        "attributes": {"brightness": 128}
+      },
+      "success": true
+    }
+  ],
+  "count": 1,
+  "limit": 10,
+  "has_more": false
+}
+```
+
+**Error Responses:**
+* **422 Unprocessable Entity** - Invalid limit parameter
+* **500 Internal Server Error** - Error getting action history
+
+---
+
+### 6. `/api/ha/cache/cleanup` - Manual Cache Cleanup
+
+* **Method:** `POST`
+* **Description:** Manually trigger cleanup of stale Home Assistant entities from Redis cache.
+
+Compares cached entities with current Home Assistant state and removes any entities that no longer exist in HA. This is normally done automatically every hour by the WebSocket client.
+
+#### Request Body
+None required.
+
+#### Example Request
+```bash
+POST /api/ha/cache/cleanup
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Cache cleanup completed successfully",
+  "timestamp": "2025-10-10T01:46:19.611634Z"
+}
+```
+
+**Error Responses:**
+* **503 Service Unavailable** - WebSocket client not available
+* **500 Internal Server Error** - Error during cleanup
+
+---
+
+### 7. `/api/ha/cache/info` - Cache Information
+
+* **Method:** `GET`
+* **Description:** Get information about the current Home Assistant cache state.
+
+Returns statistics about cached entities, domains, and cache metadata for monitoring and debugging cache consistency.
+
+#### Example Request
+```bash
+GET /api/ha/cache/info
+```
+
+#### Response
+```json
+{
+  "cache_metadata": {
+    "last_update": "2025-10-10T01:46:01.041168",
+    "total_entities": 333,
+    "controllable_entities": 179,
+    "domains": ["light", "switch", "sensor", "binary_sensor", ...]
+  },
+  "cached_entities": {
+    "total_count": 333,
+    "domain_breakdown": {
+      "sensor": 60,
+      "switch": 125,
+      "light": 39,
+      ...
+    },
+    "controllable_count": 179
+  },
+  "cache_keys": {
+    "entity_keys_sample": ["ha:entity:light.living_room", ...],
+    "total_entity_keys": 333
+  },
+  "timestamp": "2025-10-10T01:46:14.315286Z"
+}
+```
+
+**Error Responses:**
+* **503 Service Unavailable** - Redis client not available
+* **500 Internal Server Error** - Error getting cache info
+
+---
+
+## Device Control Features
+
+The Home Assistant device control system provides:
+
+* **Live Service Discovery**: Real-time fetching from Home Assistant's `/api/services` endpoint
+* **Redis Caching**: 5-minute cache for performance with force refresh capability
+* **Service Validation**: Validates services exist before execution
+* **Entity Validation**: Checks entity exists and is controllable
+* **Action Logging**: 7-day retention of all action executions with Redis storage
+* **Bulk Operations**: Execute multiple actions in sequence for scenes/automation
+* **Comprehensive Error Handling**: Detailed error responses with suggestions
+* **Field-Aware Execution**: Supports all Home Assistant service parameters and selectors
+
+---
+
+## Cache Management Features
+
+The cache management system ensures consistency between Redis cache and Home Assistant state:
+
+* **Real-time Entity Removal**: WebSocket events automatically remove deleted entities from cache
+* **Periodic Cleanup**: Hourly background process removes stale cache entries 
+* **Manual Cleanup**: API endpoint allows triggering cleanup on demand
+* **Removal Logging**: All entity removals are logged with 7-day retention
+* **Cache Consistency**: Domain and controllable entity caches updated during cleanup
+* **Stale Detection**: Compares cached entities with current Home Assistant state
+* **Error Handling**: Robust error handling with detailed logging for troubleshooting
+
+### Entity Removal Process
+
+When an entity is removed from Home Assistant:
+
+1. **WebSocket Event**: HA sends state change with `new_state=None`
+2. **Cache Deletion**: Entity removed from `ha:entity:{entity_id}` key
+3. **Logging**: Removal logged to `ha:log:{entity_id}` with `entity_removed: true`
+4. **Domain Refresh**: Domain cache (`ha:domain:{domain}`) refreshed to remove entity
+5. **Controllable Refresh**: Controllable entities cache updated if applicable
+
+### Periodic Cleanup
+
+Every hour, the system:
+
+1. **Fetch Current State**: Gets all entities from Home Assistant `/api/states`
+2. **Compare Caches**: Scans Redis for `ha:entity:*` keys
+3. **Identify Stale**: Finds cached entities not in current HA state
+4. **Remove Stale**: Deletes stale cache entries and logs removals
+5. **Refresh Caches**: Updates domain and controllable entity caches
+
+---
+
+## Entity Logging Features
+
+The entity logging system provides:
+
+* **Real-time Tracking**: WebSocket connection captures all state changes immediately
+* **7-day Retention**: Automatic cleanup of logs older than 7 days
+* **State & Attribute Changes**: Tracks both state transitions and attribute modifications
+* **Redis Storage**: High-performance storage with sorted sets for chronological access
+* **Domain Filtering**: Filter entities by Home Assistant domain
+* **Statistical Analysis**: Summary statistics for change frequency analysis
+* **Date Range Queries**: Query logs within specific time periods
 
 ````

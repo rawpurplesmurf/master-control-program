@@ -30,8 +30,10 @@ def get_safe_execution_globals():
     """Return a safe globals dict for code execution"""
     import datetime
     import json
+    import asyncio
     from mcp.database import get_db
     from mcp import models
+    from mcp import ha_state
     
     return {
         '__builtins__': {
@@ -48,10 +50,12 @@ def get_safe_execution_globals():
         },
         'datetime': datetime,
         'json': json,
+        'asyncio': asyncio,
         'get_redis_client': get_redis_sync,  # Use synchronous Redis client
         'get_db': get_db,
         'models': models,
         'next': next,  # For db = next(get_db())
+        'mcp': {'ha_state': ha_state},  # Import ha_state module for data fetchers
     }
 
 def execute_fetcher_code(code: str) -> Dict[str, Any]:

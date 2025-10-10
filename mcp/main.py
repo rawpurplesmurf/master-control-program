@@ -3,11 +3,11 @@ import sys
 import time
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi.responses import JSONResponse
 
 from mcp.router import router as api_router
 from mcp.database import engine, Base
-from mcp.home_assistant import poll_home_assistant
+from mcp.ha_websocket import start_ha_websocket_client, stop_ha_websocket_client
 from mcp.health_checks import check_mysql_connection, check_redis_connection, check_home_assistant_connection, check_ollama_connection
 
 # Configure comprehensive logging
@@ -18,6 +18,43 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
+
+# Configure debug logger to write to debug.log file
+debug_logger = logging.getLogger('debug')
+debug_handler = logging.FileHandler('debug.log')
+debug_handler.setLevel(logging.ERROR)
+debug_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+debug_handler.setFormatter(debug_formatter)
+debug_logger.addHandler(debug_handler)
+debug_logger.setLevel(logging.ERROR)
+
+# Configure Home Assistant WebSocket logger to write to homeassistant.log
+ha_logger = logging.getLogger('mcp.ha_websocket')
+ha_handler = logging.FileHandler('homeassistant.log')
+ha_handler.setLevel(logging.DEBUG)
+ha_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+ha_handler.setFormatter(ha_formatter)
+ha_logger.addHandler(ha_handler)
+ha_logger.setLevel(logging.DEBUG)  # Allow all levels to be logged to file
+
+# Add console handler for HA websocket that only shows WARNING and above
+ha_console_handler = logging.StreamHandler(sys.stdout)
+ha_console_handler.setLevel(logging.WARNING)
+ha_console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ha_console_handler.setFormatter(ha_console_formatter)
+ha_logger.addHandler(ha_console_handler)
+
+ha_logger.propagate = False  # Don't propagate to root logger
+
+# Configure WebSocket-specific logger for verbose message details
+websocket_logger = logging.getLogger('mcp.websocket')
+websocket_handler = logging.FileHandler('websocket.log')
+websocket_handler.setLevel(logging.DEBUG)
+websocket_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+websocket_handler.setFormatter(websocket_formatter)
+websocket_logger.addHandler(websocket_handler)
+websocket_logger.setLevel(logging.DEBUG)
+websocket_logger.propagate = False  # Don't propagate to root or console
 
 # Set specific log levels for different components
 logging.getLogger('mcp.router').setLevel(logging.INFO)
@@ -41,7 +78,18 @@ app = FastAPI(
     version="0.1.0"
 )
 
-scheduler = AsyncIOScheduler()
+# Global exception handler to catch all unhandled exceptions
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
+    debug_logger = logging.getLogger('debug')
+    debug_logger.error(f"Unhandled exception on {request.method} {request.url}: {traceback.format_exc()}")
+    
+    logger.error(f"Unhandled exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "detail": str(exc)}
+    )
 
 # Add request logging middleware
 @app.middleware("http")
@@ -79,12 +127,9 @@ async def startup_event():
     logger.info("  - Database tables verified/created")
 
     logger.info("[3/4] Starting Background Services...")
-    # Start background polling task
-    scheduler.add_job(poll_home_assistant, 'interval', minutes=30)
-    scheduler.start()
-    logger.info("  - APScheduler started for background tasks")
-    # Run once on startup
-    await poll_home_assistant()
+    # Start Home Assistant WebSocket client
+    await start_ha_websocket_client()
+    logger.info("  - Home Assistant WebSocket client started")
 
     logger.info("[4/4] API Ready")
     logger.info("=== MCP Startup Complete. Waiting for commands ===")
@@ -95,10 +140,10 @@ async def startup_event():
     logger.info("  - Command Processing: POST /api/command")
 
 @app.on_event("shutdown")
-def shutdown_event():
+async def shutdown_event():
     logger.info("=== Shutting down MCP ===")
-    scheduler.shutdown()
-    logger.info("Scheduler stopped")
+    await stop_ha_websocket_client()
+    logger.info("Home Assistant WebSocket client stopped")
     logger.info("MCP shutdown complete")
     print("  - Background services stopped.")
     print("--- Shutdown complete. ---")

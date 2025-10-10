@@ -57,6 +57,9 @@ def setup_database():
                 statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
                 for statement in statements:
                     cursor.execute(statement)
+                
+                # Commit changes after each file's statements
+                cnx.commit()
 
         print("\nDatabase setup complete. All tables created successfully.")
 

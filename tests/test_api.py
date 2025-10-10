@@ -19,37 +19,31 @@ app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
 
-@patch('mcp.router.models.PromptHistory')
-@patch('mcp.router.call_ollama')
-@patch('mcp.router.execute_actions')
-def test_process_command_success(mock_execute_actions, mock_call_ollama, mock_prompt_history):
+@patch('mcp.command_processor.process_command_pipeline')
+def test_process_command_success(mock_process_command):
     """
-    Tests the /api/command endpoint with mocked external services.
+    Tests the /api/command endpoint with mocked command processing pipeline.
     """
-    # Arrange: Set up the return values for our mocked functions
-    mock_ollama_response = [
-        {
-            "type": "action",
-            "intent": "light.turn_on",
-            "entity_id": "light.living_room",
-            "data": {}
-        }
-    ]
-    mock_call_ollama.return_value = mock_ollama_response
-
-    # We need to import the schema here to avoid circular dependencies at load time
-    from mcp.schemas import ExecutedAction
-    mock_executed_actions = [ExecutedAction(service="light.turn_on", entity_id="light.living_room", data={})]
-    mock_execute_actions.return_value = mock_executed_actions
+    # Arrange: Set up the return value for the mocked command processing pipeline
+    mock_pipeline_response = {
+        "response": "I've turned on the living room light for you.",
+        "template_used": "lighting_control", 
+        "data_fetchers_executed": ["lights_data"],
+        "processing_time_ms": 150,
+        "context_keys": ["user_input", "lights_data"],
+        "interaction_id": "test-interaction-123",
+        "success": True
+    }
+    mock_process_command.return_value = mock_pipeline_response
 
     # Act: Call the API endpoint
     response = client.post("/api/command", json={"command": "turn on the living room light"})
 
-    # Assert: Check the response and that our mocks were called
+    # Assert: Check the response and that our mock was called
     assert response.status_code == 200
     json_response = response.json()
-    assert json_response["status"] == "success"
-    assert len(json_response["executed_actions"]) == 1
-    assert json_response["executed_actions"][0]["entity_id"] == "light.living_room"
-    mock_call_ollama.assert_called_once()
-    mock_execute_actions.assert_called_once()
+    assert json_response["success"] == True
+    assert json_response["response"] == "I've turned on the living room light for you."
+    assert json_response["template_used"] == "lighting_control"
+    assert json_response["processing_time_ms"] == 150
+    mock_process_command.assert_called_once()

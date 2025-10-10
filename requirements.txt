@@ -1,14 +1,22 @@
+# Core Framework
 fastapi
 uvicorn[standard]
+pydantic-settings
+
+# Database & ORM
 mysql-connector-python
 SQLAlchemy
-python-dotenv
+
+# HTTP & WebSocket Communication  
 httpx
-apscheduler
-pytest
-pydantic-settings
+requests
+websockets
+aiohttp
+
+# Caching & Configuration
 redis>=4.2.0
-pytest-asyncio
-requests 
-redis
 python-dotenv
+
+# Testing
+pytest
+pytest-asyncio

@@ -2,12 +2,29 @@
 
 ## Project Documentation
 
+### Core Documentation
 - **Changelog**: See the [CHANGELOG.md](./CHANGELOG.md) for a detailed list of changes and release notes.
 - **API Documentation**: For details on how to interact with the MCP, see the [API.md](./docs/API.md) documentation.
-- **Enhanced Rules System**: Complete guide to Skippy Guardrails and Submind Automations in [enhanced-rules-system.md](./docs/enhanced-rules-system.md).
-- **Data Fetcher Guide**: Learn how to create and use configurable data fetchers in [data-fetcher.md](./docs/data-fetcher.md).
 - **API Examples**: See [curl.md](./docs/curl.md) for example curl commands to test the API.
 - **TODO**: The [todo.md](./docs/todo.md) file contains a list of tasks to be completed.
+
+### System Architecture & Features
+- **Enhanced Rules System**: Complete guide to Skippy Guardrails and Submind Automations in [enhanced-rules-system.md](./docs/enhanced-rules-system.md).
+- **Data Fetcher Guide**: Learn how to create and use configurable data fetchers in [data-fetcher.md](./docs/data-fetcher.md).
+- **Redis Data Management**: Comprehensive guide to Redis keys, caching, and data storage in [redis.md](./docs/redis.md).
+- **WebSocket Migration**: Details on the migration from polling to real-time WebSocket integration in [WEBSOCKET_MIGRATION.md](./docs/WEBSOCKET_MIGRATION.md).
+- **Entity Logging System**: Complete guide to 7-day entity state logging and history in [ENTITY_LOGGING_COMPLETE.md](./docs/ENTITY_LOGGING_COMPLETE.md).
+
+### Implementation Guides
+- **Debug Logging**: Implementation details for comprehensive exception logging in [debug_logging_implementation.md](./docs/debug_logging_implementation.md).
+- **Device Control Preview**: Home Assistant device control framework overview in [preview_device_control.md](./docs/preview_device_control.md).
+- **Prompt Templates**: Template structure and usage guide in [prompt_templates.txt](./docs/prompt_templates.txt).
+
+### Flow Diagrams
+- **Simple Command Flow**: Basic command processing flow in [Simple Command Flow.mer](./docs/Simple%20Command%20Flow.mer).
+- **Conditional Command Flow**: Enhanced conditional processing in [Conditional Comand Flow.mer](./docs/Conditional%20Comand%20Flow.mer).
+- **Multi-Conditional Flow**: Complex multi-step processing in [Multi-Conditional Command Flow.mer](./docs/Multi-Conditional%20Command%20Flow.mer).
+- **Informational Queries**: Query processing workflow in [Informational Query Flow.txt](./docs/Informational%20Query%20Flow.txt).
 
 The Main Control Program (MCP) is a Python-based application that integrates a local Ollama Large Language Model (LLM) with a Home Assistant smart home automation system. The MCP's core function is to translate natural language commands into actionable Home Assistant API calls, enabling intelligent and context-aware control of smart home devices.
 
@@ -23,10 +40,13 @@ The Main Control Program (MCP) is a Python-based application that integrates a l
 - **Enhanced Rules System**: Two-type intelligent rule engine:
   - **Skippy Guardrails**: Contextual safety rules that prevent inappropriate actions (e.g., no garden lights during daylight)
   - **Submind Automations**: Proactive automation rules that trigger actions based on conditions (e.g., lights on when arriving after sunset)
+- **Real-Time Home Assistant Integration**: WebSocket-based connection for live state updates with automatic reconnection and Redis caching for optimal performance.
+- **Smart Cache Management**: Automatic entity removal detection and cleanup with real-time WebSocket events, periodic stale entity cleanup, and manual cache management APIs.
 - **Safety and Reliability**: Multi-layer protection with intelligent guardrails and deterministic rule validation.
-- **Persistent State**: Utilizes a MySQL database to store entity data, rules, and conversational history.
+- **Persistent State**: Utilizes MySQL for rules and templates, Redis for real-time Home Assistant state caching, and comprehensive prompt history tracking.
 - **Modular Architecture**: Designed with a clear separation of concerns, where the LLM is a tool and the MCP is the intelligent orchestrator.
 - **Prompt Templates Management**: Create and manage structured prompt templates with intent keywords, system prompts, user templates, and configurable pre-fetch data arrays via REST API.
+- **Configurable System Prompts**: Database-backed AI personality management with 5 built-in personas (default, simple assistant, automation-focused, conversational, technical expert) and full CRUD API for custom system prompts.
 - **Data Fetcher Engine**: Configurable Python-based data fetchers stored in MySQL with Redis caching, TTL management, and safe code execution for dynamic prompt data.
 - **Comprehensive Prompt History System**: Complete LLM interaction tracking and management:
   - **Automatic Storage**: All AI interactions stored in Redis with rich metadata and source tracking
@@ -37,17 +57,18 @@ The Main Control Program (MCP) is a Python-based application that integrates a l
   - **Audit Trail**: Complete history of all AI interactions for debugging and compliance
 - **Web-Based Admin Interface**: Comprehensive HTML admin panel at `/html/admin.html` for managing both rule types, prompt templates, and data fetchers with real-time health monitoring.
 - **Home Assistant Status Dashboard**: Beautiful HA entity viewer at `/html/ha-status.html` with real-time entity display, domain filtering, search capabilities, and comprehensive statistics dashboard.
-- **Health Monitoring**: Built-in health check endpoints for monitoring database, Redis, Home Assistant, and Ollama connections.
-- **Comprehensive Test Coverage**: Full test suite with 30+ tests covering all functionality including CRUD operations, health checks, HA entities, command processing pipeline, prompt history management, and external service integrations.
+- **Health Monitoring**: Built-in health check endpoints for monitoring database, Redis, Home Assistant REST API, WebSocket connection, and Ollama connections.
+- **Comprehensive Test Coverage**: Full test suite with 30+ tests covering all functionality including CRUD operations, health checks, HA entities, WebSocket integration, command processing pipeline, prompt history management, and external service integrations.
+- **Complete Redis Documentation**: Comprehensive Redis data management guide including all key patterns, administrative commands, monitoring scripts, and maintenance procedures in [redis.md](./docs/redis.md).
 
 ## Technology Stack
 
 - **Programming Language**: Python 3.9+
 - **Web Framework**: FastAPI
-- **Database**: MySQL
+- **Database**: MySQL (rules, templates, data fetchers, system prompts)
 - **ORM**: SQLAlchemy
-- **Cache**: Redis (for command caching and prompt history)
-- **Background Tasks**: APScheduler
+- **Cache**: Redis (real-time HA state, data fetcher cache, prompt history)
+- **Real-Time Communication**: WebSockets (Home Assistant integration)
 - **Configuration**: python-dotenv
 
 ## Project Structure
@@ -86,8 +107,9 @@ The Main Control Program (MCP) is a Python-based application that integrates a l
     - In the project root, copy the `.env.example` file to `.env`.
     - Fill in the required credentials for Home Assistant, Ollama, MySQL, and Redis.
     - **Important:**
-        - The `HA_URL` in your `.env` file should NOT have a trailing slash (e.g., use `http://venus.localdomain:8123` not `http://venus.localdomain:8123/`). This avoids 404 errors when calling the Home Assistant API.
-        - The poller will use `REDIS_URL` if set, otherwise it will construct the connection string from `REDIS_HOST` and `REDIS_PORT` (e.g., `REDIS_HOST=synology4`, `REDIS_PORT=6379`).
+        - The `HA_URL` in your `.env` file should NOT have a trailing slash (e.g., use `http://venus.localdomain:8123` not `http://venus.localdomain:8123/`). This avoids errors with both REST API calls and WebSocket connections.
+        - Redis is required for real-time Home Assistant state caching. Use `REDIS_URL` if available, otherwise set `REDIS_HOST` and `REDIS_PORT` (e.g., `REDIS_HOST=synology4`, `REDIS_PORT=6379`).
+        - Ensure Home Assistant WebSocket API is accessible - the system will automatically establish and maintain the connection.
 
 ## Admin Interface & Health Monitoring
 
@@ -97,16 +119,18 @@ The MCP includes comprehensive web-based interfaces accessible once the server i
 - **Rules Management**: View, create, edit, and delete both Skippy Guardrails and Submind Automations
 - **Prompt Templates Management**: Full CRUD operations for prompt templates including system prompts, user templates, and pre-fetch data arrays
 - **Data Fetcher Management**: Create, edit, test, and manage configurable Python data fetchers with caching and TTL controls
-- **Real-Time Health Monitoring**: Live status checks for database, Redis, Home Assistant, and Ollama services
+- **Real-Time Health Monitoring**: Live status checks for database, Redis, Home Assistant REST API, WebSocket connection, and Ollama services
 - **Bootstrap UI**: Responsive design with error handling and form validation
 
 ### Home Assistant Status Dashboard (`/html/ha-status.html`)
 - **Comprehensive Entity Display**: All HA entities organized by domain (lights, switches, sensors, etc.)
+- **Device Control Interface**: Direct control buttons for lights, switches, and other controllable devices
+- **Real-time State Updates**: Live entity state changes via WebSocket with optimistic UI updates
 - **Statistics Overview**: Real-time counts of total entities, availability status, and domain breakdown
 - **Advanced Filtering**: Real-time search and domain-based filtering for quick entity location
 - **Visual State Indicators**: Color-coded status badges showing entity states (on/off/unavailable)
 - **Entity Details**: Full entity information including friendly names, attributes, and last changed timestamps
-- **Mobile Responsive**: Works seamlessly on desktop and mobile devices
+- **Mobile Responsive**: Works seamlessly on desktop and mobile devices with touch-friendly controls
 
 ### Skippy Chat Interface (`/html/skippy-chat.html`)
 - **Interactive AI Chat**: Beautiful web-based chat interface for natural conversation with Skippy AI
@@ -134,6 +158,7 @@ The MCP provides REST API endpoints for all functionality:
 - **Command Processing**: `/api/command` (POST) - Enhanced pipeline for natural language command processing with automatic history storage
 - **Rules**: `/api/rules` (GET, POST, PUT, DELETE) with rule type filtering
 - **Prompt Templates**: `/api/prompts` (GET, POST, PUT, DELETE) 
+- **System Prompts**: `/api/system-prompts` (GET, POST, PUT, DELETE) with activation and active prompt endpoints
 - **Data Fetchers**: `/api/data-fetchers` (GET, POST, PUT, DELETE) with test/refresh endpoints
 - **Prompt History**: Complete history management API:
   - `/api/prompt-history` (GET) - Retrieve history with pagination and source filtering
@@ -141,10 +166,51 @@ The MCP provides REST API endpoints for all functionality:
   - `/api/prompt-history/{id}` (GET) - Detailed interaction view
   - `/api/prompt-history/{id}/rerun` (POST) - Re-execute previous prompts
   - `/api/prompt-history/{id}` (DELETE) - Remove specific interactions
-- **Home Assistant Entities**: `/api/ha/entities` (GET) for real-time HA entity data
-- **Health Checks**: `/api/health` and `/api/health/{service}` for system monitoring
+- **Home Assistant Entities**: `/api/ha/entities` (GET) for real-time HA entity data from WebSocket cache
+- **Home Assistant Actions**: `/api/ha/action` (POST) and `/api/ha/actions/bulk` (POST) for device control with comprehensive logging
+- **Cache Management**: `/api/ha/cache/cleanup` (POST) for manual cache cleanup and `/api/ha/cache/info` (GET) for cache statistics
+- **Health Checks**: `/api/health` and `/api/health/{service}` for system monitoring including WebSocket connection status
 
 For complete API documentation, see [docs/API.md](./docs/API.md) and [docs/curl.md](./docs/curl.md) for example usage.
+
+### Real-Time Home Assistant Integration
+
+The MCP uses a WebSocket connection to maintain live, real-time state data from Home Assistant:
+
+#### **WebSocket Architecture**
+```
+[Home Assistant] ←→ [WebSocket Client] → [Redis Cache] → [Data Fetchers] → [LLM Processing]
+     (Events)           (Real-time)        (Fast Access)    (Live Data)      (Smart Actions)
+```
+
+#### **Key Components**
+- **WebSocket Client** (`mcp/ha_websocket.py`): Maintains persistent connection with auto-reconnection
+- **State Manager** (`mcp/ha_state.py`): Provides clean async API for accessing cached state data
+- **Redis Cache**: Organizes entities by domain for fast queries (`ha:domain:light`, `ha:entity:light.living_room`)
+- **Health Monitoring**: Validates connection status and cache freshness
+
+#### **Benefits**
+- ⚡ **Real-time updates** - state changes reflected immediately
+- 🚀 **Fast data access** - Redis queries in milliseconds vs seconds
+- 🔄 **Automatic recovery** - handles network issues and HA restarts
+- 🧹 **Smart cache management** - automatic entity removal detection and cleanup
+- 📊 **Rich queries** - search by domain, pattern, state, friendly name
+- 🛡️ **Reliable** - graceful degradation with comprehensive error handling
+
+#### **State Access Examples**
+```python
+# Get all lights that are currently on
+lights_on = await get_ha_lights_on()
+
+# Search for living room entities  
+living_entities = await search_ha_entities("living")
+
+# Get all switch entities with state breakdown
+switches = await get_ha_domain_entities("switch")
+
+# Get specific entity details
+light = await get_ha_entity("light.living_room")
+```
 
 ### Command Processing Pipeline
 
@@ -212,7 +278,7 @@ curl -X POST http://localhost:8000/api/prompt-history/{interaction_id}/rerun
 
 ## Running Tests
 
-This project uses `pytest` for testing with comprehensive coverage of all functionality. The test suite includes 35+ tests covering:
+This project uses `pytest` for testing with comprehensive coverage of all functionality. The test suite includes 42+ tests covering:
 
 - **CRUD Operations**: Rules, prompt templates, and data fetchers management
 - **Prompt History**: Complete testing of history storage, retrieval, filtering, re-run, and cleanup operations

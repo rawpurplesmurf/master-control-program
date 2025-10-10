@@ -1,3 +1,232 @@
+## [1.0.4] - 2025-10-09
+
+### 🎯 **System Prompt Management & Data Fetcher Reliability**
+
+#### **Configurable System Prompts**
+- **Database-Backed Prompts**: New `system_prompts` MySQL table with 5 default AI personalities
+  - `default_mcp`: Standard Master Control Program assistant
+  - `simple_assistant`: Straightforward, minimal responses
+  - `automation_focused`: Expert in home automation and device control
+  - `conversational`: Friendly, engaging communication style
+  - `technical_expert`: Detailed technical explanations and analysis
+- **Complete CRUD API**: Full system prompt management through REST endpoints
+  - `GET /api/system-prompts` - List all available prompts
+  - `POST /api/system-prompts` - Create new custom prompts
+  - `PUT /api/system-prompts/{id}` - Update existing prompts
+  - `DELETE /api/system-prompts/{id}` - Remove prompts
+  - `POST /api/system-prompts/{id}/activate` - Set active prompt
+  - `GET /api/system-prompts/active` - Get currently active prompt
+- **Admin Interface Integration**: System prompt management through existing admin interface
+- **Prompt Template Integration**: Optional system_prompt field in prompt templates for per-template customization
+
+#### **Enhanced Data Fetcher Reliability**
+- **Improved Cache Health Check**: Updated timeout from 5 minutes to 24 hours for realistic cache validation
+- **Redis Connection Recovery**: Automatic reconnection handling with graceful fallback on connection failures
+- **WebSocket Resilience**: Enhanced error handling for server restarts and connection issues
+- **All 11 Data Fetchers Verified**: Complete functionality validation across entire data fetcher ecosystem
+  - Time/date fetchers, HA device status, rules management
+  - Light/switch domain queries, entity search and retrieval
+  - State summaries and pattern-based entity discovery
+
+#### **Documentation & Testing Updates**
+- **Complete API Documentation**: System prompt endpoints added to `docs/API.md`
+- **cURL Examples**: Comprehensive system prompt examples in `docs/curl.md`
+- **Enhanced Test Suite**: Updated `scripts/test_api.sh` with system prompt test coverage
+- **Database Schema**: New migration script `mysql/schemas/08_system_prompt.sql`
+
+## [1.0.3] - 2025-10-09
+
+### 🧹 **Cache Management & Entity Removal System**
+
+#### **Automatic Entity Removal Handling**
+- **Real-time WebSocket Removal**: Automatic cache cleanup when Home Assistant sends `new_state=None` 
+- **Periodic Cache Cleanup**: Hourly background process to remove stale entities missed by WebSocket events
+- **Manual Cache Management**: API endpoints for on-demand cache cleanup and monitoring
+- **Comprehensive Logging**: All entity removals logged with 7-day retention and `entity_removed` flag
+- **Cache Consistency**: Domain and controllable entity caches updated during cleanup operations
+
+#### **New Cache Management API**
+- **`POST /api/ha/cache/cleanup`**: Manually trigger cache cleanup for stale entities
+  - Compares cached entities with current Home Assistant state
+  - Removes entities that no longer exist in HA
+  - Logs cleanup actions with `cleanup_action: true` flag
+  - Updates all related cache structures
+- **`GET /api/ha/cache/info`**: Comprehensive cache state information
+  - Total entity counts and domain breakdown
+  - Controllable entity statistics
+  - Cache metadata with last update timestamps
+  - Sample cache keys for debugging
+
+#### **Enhanced WebSocket Client**
+- **`_handle_entity_removal()`**: Process entity removal events with proper cache cleanup
+- **`_cleanup_stale_cache_entries()`**: Compare HA state with cache to find stale entries
+- **`_periodic_cache_cleanup()`**: Hourly cleanup task running in background
+- **Enhanced Logging**: Added `entity_removed` and `cleanup_action` flags to all log entries
+- **Robust Error Handling**: Proper Redis client initialization and comprehensive exception handling
+
+#### **Testing & Documentation**
+- **Enhanced Test Suite**: Added cache management tests to `scripts/test_api.sh`
+  - Cache information retrieval validation
+  - Manual cleanup endpoint testing
+  - Cache consistency verification after cleanup operations
+- **API Documentation**: Complete cache management documentation in `/docs/API.md`
+- **Integration Testing**: Comprehensive entity removal scenarios with cleanup verification
+
+## [1.0.2] - 2025-10-06
+
+### 🎮 **Home Assistant Device Control System**
+
+#### **Complete Device Control Framework**
+- **Live Service Discovery**: Real-time fetching from Home Assistant's `/api/services` endpoint
+- **Service Validation**: Validates all service calls against live HA service definitions
+- **Action Execution Engine**: Complete device control with validation, error handling, and logging
+- **Bulk Actions Support**: Execute multiple device actions in sequence for scenes and automation
+- **Action History Tracking**: 7-day retention of all device actions with Redis storage
+
+#### **New Device Control API**
+- **`GET /api/ha/services`**: Live Home Assistant services with Redis caching (5-minute TTL)
+  - Force refresh option (`?refresh=true`)
+  - Domain filtering (`?domain=light`)
+  - Field-aware parameter definitions
+  - Fallback services when HA unavailable
+- **`POST /api/ha/action`**: Execute single Home Assistant actions
+  - Entity validation and controllability checks
+  - Comprehensive error handling with suggestions
+  - Service parameter validation
+  - State change tracking
+- **`POST /api/ha/actions/bulk`**: Execute multiple actions (max 50)
+  - Sequence execution with individual result tracking
+  - Partial failure handling
+  - Scene and automation support
+- **`GET /api/ha/entities/{entity_id}/actions`**: Action execution history
+  - 7-day retention with Redis sorted sets
+  - Configurable limits (1-200 results)
+  - Success/failure tracking with error details
+
+#### **New Device Control Components**
+- **`mcp/ha_services.py`**: Home Assistant services manager with real-time discovery and caching
+- **`mcp/ha_action_executor.py`**: Device action execution engine with validation and logging
+- **Enhanced Router**: 4 new endpoints with comprehensive error handling and logging
+- **Admin Interface Enhancement**: Device Control tab in admin interface (future implementation)
+
+#### **Testing & Quality Assurance**  
+- **42 New Tests**: Comprehensive test coverage for services and actions
+  - `tests/test_ha_services.py` - 14 tests for service discovery and validation
+  - `tests/test_ha_action_executor.py` - 13 tests for action execution and logging  
+  - `tests/test_ha_services_api.py` - 15 tests for API endpoints and error handling
+- **Integration Testing**: Full API test coverage including edge cases and error scenarios
+- **Mock Testing**: Proper async mocking for all external service dependencies
+
+#### **Documentation Updates**
+- **Enhanced API Documentation**: Complete device control API documentation in `/docs/API.md`
+- **Extended curl Examples**: New device control examples in `/docs/curl.md` 
+- **Updated Test Script**: 8 new test scenarios in `scripts/test_api.sh` for device control validation
+- **Action Examples**: Real-world curl examples for lights, switches, climate, and scenes
+
+## [1.0.1] - 2025-10-04
+
+### 🔧 **WebSocket State Logging & Redis Documentation**
+
+#### **Entity State Change Logging**
+- **Fixed Redis Client Initialization**: WebSocket client now properly initializes Redis connection for state logging
+- **Real-Time Entity Logging**: Manual device state changes are now logged to Redis with 7-day retention
+- **Entity Logs Admin Interface**: Complete admin interface at `/html/admin.html` with Entity Logs tab
+- **Comprehensive Log API**: Full REST API for entity log queries, summaries, and filtering
+- **WebSocket Message Debugging**: Enhanced WebSocket message debugging with console logging and storage
+
+#### **Redis Documentation & Administration**
+- **Complete Redis Guide**: New `/docs/redis.md` with comprehensive Redis key documentation
+- **Redis Key Patterns**: Detailed documentation of all Redis keys used by MCP:
+  - Entity state caching (`ha:entity:*`, `ha:domain:*`, `ha:all_states`)
+  - State change logging (`ha:log:*` with chronological sorting)
+  - Data fetcher caching (`data_fetcher:*` with configurable TTL)
+  - WebSocket debugging (`ha:websocket:messages`)
+  - Prompt history storage (`prompt_history:*`)
+- **Administrative Commands**: Sample Redis CLI commands for monitoring, maintenance, and troubleshooting
+- **Performance Monitoring**: Health check scripts and performance optimization guidelines
+- **Maintenance Procedures**: Automated cleanup scripts and emergency recovery procedures
+
+#### **Testing & Quality Improvements**
+- **Updated WebSocket Tests**: Fixed all tests to account for Redis client initialization
+- **Enhanced Test Coverage**: Added Redis connection failure testing scenarios
+- **Test Suite Validation**: All 30+ tests pass with new Redis requirements
+
+#### **Technical Fixes**
+- **WebSocket Client**: Proper Redis client initialization in `connect()` method
+- **State Change Handler**: Fixed nested JSON parsing for Home Assistant WebSocket events
+- **Entity Log Storage**: Implemented Redis sorted sets for chronological state change logging
+- **Debug Logging**: Enhanced WebSocket message processing with detailed console output
+
+## [1.0.0] - 2025-10-03
+
+### 🚀 **Real-Time Home Assistant WebSocket Integration**
+
+#### **Major Architecture Migration: Polling → WebSocket**
+- **Real-Time State Updates**: Replaced 30-minute polling with live WebSocket connection to Home Assistant
+- **Redis State Cache**: Entity states now cached in Redis with automatic real-time updates
+- **Performance Improvements**: Data fetchers execute in milliseconds instead of seconds
+- **Auto-Reconnection**: Intelligent WebSocket reconnection with exponential backoff
+- **Comprehensive State Management**: New `mcp/ha_state.py` module providing clean async API
+
+#### **New WebSocket Components**
+- **`mcp/ha_websocket.py`**: Complete WebSocket client with authentication and state caching
+- **`mcp/ha_state.py`**: Redis-based state manager with search, filtering, and convenience functions
+- **WebSocket Health Check**: New `/api/health/websocket` endpoint for connection monitoring
+- **Enhanced Data Fetchers**: 7 new WebSocket-aware data fetchers for real-time state access
+
+#### **Enhanced Data Fetcher Capabilities**
+- **Real-Time Access Functions**:
+  - `get_ha_lights_on()` - All lights currently on
+  - `get_ha_switches_on()` - All switches currently on
+  - `search_ha_entities(pattern)` - Pattern-based entity search
+  - `get_ha_domain_entities(domain)` - All entities for specific domain
+- **Async Support**: Data fetchers now support `asyncio` for WebSocket state access
+- **Cache Health Monitoring**: Automatic validation of cache freshness (alerts if >5 minutes old)
+
+#### **Migration Benefits**
+- ⚡ **Real-time updates** instead of 30-minute delays
+- 🚀 **10x faster data fetchers** with Redis cache
+- 🔄 **Automatic reconnection** with connection health monitoring
+- 📊 **Rich state queries** - search by domain, pattern, state value
+- 🛡️ **Graceful degradation** with comprehensive error handling
+- ✅ **Full backward compatibility** - existing code continues to work
+
+#### **Removed Dependencies**
+- **APScheduler**: No longer needed for polling background tasks
+- **MySQL Entity Storage**: Entities now stored in Redis cache for faster access
+- **Polling Delays**: Eliminated 30-minute polling intervals
+
+#### **Technical Details**
+- **WebSocket Authentication**: Automatic token-based authentication with Home Assistant
+- **Event Subscription**: Real-time subscription to `state_changed` events
+- **Cache Structure**: Organized by domain (`ha:domain:light`), entity (`ha:entity:light.living_room`), and summary (`ha:metadata`)
+- **Connection Recovery**: Handles network issues, HA restarts, and authentication failures
+- **Test Coverage**: 16 new tests covering WebSocket client and state manager functionality
+
+## [0.9.0] - 2025-10-03
+
+### 🧠 **Intelligent Template Selection System**
+
+#### **Major Enhancement: Keyword-Based Template Matching**
+- **Smart Template Selection**: Automatically selects the best prompt template based on command content
+- **Intent Keywords**: Each template defines comma-separated keywords that trigger its use
+- **First 5 Words Analysis**: System analyzes the first 5 words of each command for keyword matching
+- **Scoring Algorithm**: Templates receive points for each matched keyword
+- **Intelligent Tie-Breaking**: When templates have equal scores, prefers templates with more total keywords (more specific)
+- **Fallback Strategy**: Uses 'default' template when no keywords match
+
+#### **Template Selection Examples**
+- **Home Automation**: Commands starting with "turn, switch, set, adjust, control" → `home_automation` template
+- **Information Queries**: Commands starting with "what, when, where, how, why" → `information` template  
+- **Time/Weather**: Commands starting with "time, weather, temperature, forecast" → `time_weather` template
+- **No Match**: Commands with no keyword matches → `default` template
+
+#### **Enhanced Admin Interface**
+- **Template Management**: Improved prompt templates tab with keyword visualization
+- **Keyword Badges**: Intent keywords displayed as colored badges for easy identification
+- **Selection Documentation**: Built-in explanation of how intelligent selection works
+- **Better Layout**: Enhanced table design with truncated content and tooltips
+
 ## [0.8.0] - 2025-10-03
 
 ### Added - Comprehensive Prompt History System
@@ -33,7 +262,12 @@
   - **Error Handling**: Graceful connection error display and status indicators
 
 ### Enhanced
-- **Navigation Updates**: Added prompt history links to all admin interfaces
+- **Admin Interface Redesign**: Improved tabbed layout for better organization
+  - **Tabbed Navigation**: Separated Health Checks, Prompt Templates, Data Fetchers, and Rules into distinct tabs
+  - **Improved Styling**: Enhanced tab design with better visual hierarchy and Bootstrap integration
+  - **Lazy Loading**: Tab content loads only when accessed for better performance
+  - **Better UX**: Cleaner layout with improved button placement and visual consistency
+- **Navigation Updates**: Added Skippy Chat and prompt history links to all admin interfaces
 - **Test Coverage**: Comprehensive test suite for prompt history functionality
   - 15 new test functions covering all history operations
   - Error handling, pagination, filtering, and re-run functionality testing

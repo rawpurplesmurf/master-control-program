@@ -55,3 +55,34 @@ async def check_redis_connection():
     except Exception as e:
         status = f"FAILED ({e})"
     print(f"  - Redis Connection ({settings.REDIS_HOST}:{settings.REDIS_PORT}): {status}")
+
+async def check_ha_websocket_connection():
+    """Checks the Home Assistant WebSocket connection status."""
+    status = "OK"
+    try:
+        from mcp.ha_websocket import get_ha_websocket_client
+        from mcp.ha_state import get_ha_state_manager
+        
+        # Check if WebSocket client is running
+        client = get_ha_websocket_client()
+        if not client or not client.is_running or not client.is_authenticated:
+            status = "FAILED (WebSocket not connected/authenticated)"
+        else:
+            # Check if Redis cache has recent data
+            manager = get_ha_state_manager()
+            is_healthy = await manager.is_cache_healthy()
+            if not is_healthy:
+                status = "WARNING (Stale cache data)"
+    except Exception as e:
+        status = f"FAILED ({e})"
+    print(f"  - HA WebSocket Connection: {status}")
+
+async def check_all_services():
+    """Run all health checks."""
+    print("=== Health Check Results ===")
+    check_mysql_connection()
+    await check_redis_connection()
+    await check_home_assistant_connection()
+    await check_ollama_connection()
+    await check_ha_websocket_connection()
+    print("=== End Health Checks ===\n")

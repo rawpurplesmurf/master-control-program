@@ -69,3 +69,18 @@ class DataFetcher(Base):
     is_active = Column(Integer, nullable=False, default=1)  # Use Integer instead of Boolean for compatibility
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class SystemPrompt(Base):
+    """System prompt configurations for LLM interactions."""
+    __tablename__ = "system_prompts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False, index=True)
+    prompt = Column(Text, nullable=False)
+    description = Column(Text)
+    is_active = Column(Integer, default=0, index=True)  # Use Integer for boolean compatibility
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<SystemPrompt(name='{self.name}', active={bool(self.is_active)})>"

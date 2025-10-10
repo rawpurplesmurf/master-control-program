@@ -7,34 +7,103 @@ to LLM response via prompt templates and data fetchers.
 
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session
 
 from mcp import models
+from mcp.database import get_db
 from mcp.data_fetcher_engine import get_prefetch_data
 from mcp.ollama import call_ollama_text
 from mcp.prompt_history import prompt_history_manager
 
 logger = logging.getLogger(__name__)
 
-def determine_prompt_template(command: str) -> str:
+def determine_prompt_template(command: str, db: Session) -> str:
     """
-    Determine which prompt template to use for the command.
-    For now, hardcoded to 'default'.
+    Determine which prompt template to use based on intent keywords.
     
-    TODO: Implement intent matching logic that:
-    - Analyzes command text against template intent_keywords
-    - Returns the best matching template name
-    - Falls back to 'default' if no good match found
+    Analyzes the first 5 words of the command against all template intent_keywords.
+    Returns the best matching template name, or 'default' if no match found.
+    
+    Args:
+        command: The user's natural language command
+        db: Database session to query templates
+        
+    Returns:
+        Template name to use for processing
     """
-    logger.info(f"Determining prompt template for command: {command[:50]}...")
+    logger.info(f"Analyzing command for template selection: {command[:50]}...")
     
-    # Hardcoded for now - will implement intent matching later
-    template_name = "default"
+    # Extract first 5 words from command (case-insensitive)
+    command_words = command.lower().strip().split()[:5]
+    logger.debug(f"First 5 words: {command_words}")
     
-    logger.info(f"Selected template: {template_name}")
-    return template_name
+    if not command_words:
+        logger.warning("Empty command, using default template")
+        return "default"
+    
+    try:
+        # Get all active prompt templates from database
+        templates = db.query(models.PromptTemplate).all()
+        
+        if not templates:
+            logger.warning("No prompt templates found in database")
+            return "default"
+        
+        # Score each template based on keyword matches
+        template_scores = []
+        
+        for template in templates:
+            score = 0
+            matched_keywords = []
+            
+            # Parse intent keywords (comma-separated, case-insensitive)
+            if template.intent_keywords:
+                intent_keywords = [kw.strip().lower() for kw in template.intent_keywords.split(',')]
+                
+                # Check each intent keyword against command words
+                for keyword in intent_keywords:
+                    if keyword in command_words:
+                        score += 1
+                        matched_keywords.append(keyword)
+                        logger.debug(f"Template '{template.template_name}' matched keyword: '{keyword}'")
+            
+            if score > 0:
+                template_scores.append({
+                    'template_name': template.template_name,
+                    'score': score,
+                    'matched_keywords': matched_keywords
+                })
+        
+        # Sort by score (highest first), then by number of total keywords (more specific templates first)
+        if template_scores:
+            # Add total keyword count for tie-breaking
+            for score_item in template_scores:
+                template = next(t for t in templates if t.template_name == score_item['template_name'])
+                total_keywords = len([kw.strip() for kw in template.intent_keywords.split(',')]) if template.intent_keywords else 0
+                score_item['total_keywords'] = total_keywords
+            
+            # Sort by score first (highest), then by total keywords (highest = more specific)
+            template_scores.sort(key=lambda x: (x['score'], x['total_keywords']), reverse=True)
+            best_match = template_scores[0]
+            
+            logger.info(f"Selected template: '{best_match['template_name']}' "
+                       f"(score: {best_match['score']}, "
+                       f"matched: {best_match['matched_keywords']}, "
+                       f"total_keywords: {best_match['total_keywords']})")
+            
+            return best_match['template_name']
+        
+        # No keyword matches found, use default
+        logger.info("No keyword matches found, using default template")
+        return "default"
+        
+    except Exception as e:
+        logger.error(f"Error in template selection: {str(e)}")
+        logger.info("Falling back to default template due to error")
+        return "default"
 
 def execute_data_fetchers(template: models.PromptTemplate, command: str) -> Dict[str, Any]:
     """
@@ -93,6 +162,12 @@ def construct_prompt(template: models.PromptTemplate, context: Dict[str, Any]) -
     """
     Construct the system and user prompts with fetched data.
     
+    Supports several types of placeholder substitutions:
+    - {variable_name} - Replaced with context variables from data fetchers
+    - [skippy_guard_rail:name] - Replaced with rule data from skippy guardrails
+      (note: this references a rule with rule_name='skippy_guard_rail_name')
+    - [system_prompt:name] - Replaced with content from stored system prompts
+    
     Args:
         template: The prompt template to use
         context: Dictionary with user_input and fetched data
@@ -103,7 +178,59 @@ def construct_prompt(template: models.PromptTemplate, context: Dict[str, Any]) -
     try:
         # Format the user template with context data
         formatted_user_prompt = template.user_template.format(**context)
+        
+        # Process any skippy guardrail placeholders in the format [skippy_guard_rail:name]
+        import re
+        guardrail_placeholders = re.findall(r'\[skippy_guard_rail:([^\]]+)\]', formatted_user_prompt)
+        
+        # Replace each guardrail placeholder with actual rule data
+        for rule_name in guardrail_placeholders:
+            full_rule_name = f"skippy_guard_rail_{rule_name}"
+            db = next(get_db())
+            rule = db.query(models.Rule).filter(
+                models.Rule.rule_name == full_rule_name,
+                models.Rule.rule_type == "skippy_guardrail"
+            ).first()
+            
+            if rule:
+                rule_text = f"GUARD RAIL: {rule.description}\n"
+                rule_text += f"• Target: {rule.target_entity_pattern}\n"
+                rule_text += f"• Blocked Actions: {rule.blocked_actions}\n"
+                rule_text += f"• Conditions: {rule.guard_conditions}\n"
+                if rule.override_keywords:
+                    rule_text += f"• Override with: {rule.override_keywords}\n"
+                
+                # Replace placeholder with rule data
+                formatted_user_prompt = formatted_user_prompt.replace(f"[skippy_guard_rail:{rule_name}]", rule_text)
+            else:
+                # If rule not found, leave a note
+                formatted_user_prompt = formatted_user_prompt.replace(
+                    f"[skippy_guard_rail:{rule_name}]", 
+                    f"[Guard rail '{full_rule_name}' not found]"
+                )
+        
+        # Get system prompt - either from template or from system_prompts table
         system_prompt = template.system_prompt
+        
+        # Look for system prompt placeholders in the format [system_prompt:name]
+        system_placeholders = re.findall(r'\[system_prompt:([^\]]+)\]', system_prompt)
+        if system_placeholders:
+            # Attempt to load the system prompt from the database
+            for prompt_name in system_placeholders:
+                db = next(get_db())
+                db_prompt = db.query(models.SystemPrompt).filter(
+                    models.SystemPrompt.name == prompt_name
+                ).first()
+                
+                if db_prompt:
+                    # Replace the placeholder with the actual system prompt
+                    system_prompt = system_prompt.replace(f"[system_prompt:{prompt_name}]", db_prompt.prompt)
+                else:
+                    # If not found, leave a note
+                    system_prompt = system_prompt.replace(
+                        f"[system_prompt:{prompt_name}]", 
+                        f"[System prompt '{prompt_name}' not found]"
+                    )
         
         logger.info(f"Successfully constructed prompt for template: {template.template_name}")
         logger.debug(f"System prompt length: {len(system_prompt)}")
@@ -146,8 +273,8 @@ async def process_command_pipeline(command: str, db: Session, source: str = "api
     start_time = datetime.utcnow()
     
     try:
-        # Step 1: Determine prompt template (hardcoded for now)
-        template_name = determine_prompt_template(command)
+        # Step 1: Determine prompt template using intelligent keyword matching
+        template_name = determine_prompt_template(command, db)
         logger.info(f"Using prompt template: {template_name}")
         
         # Look up the template in database
@@ -225,6 +352,12 @@ async def process_command_pipeline(command: str, db: Session, source: str = "api
         
     except Exception as e:
         processing_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        
+        # Log full stack trace to debug.log
+        import traceback
+        debug_logger = logging.getLogger('debug')
+        debug_logger.error(f"Exception in command processing pipeline for '{command}': {traceback.format_exc()}")
+        
         logger.error(f"Error in command processing pipeline: {str(e)}", exc_info=True)
         
         # Store error in prompt history too

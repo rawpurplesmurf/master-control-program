@@ -9,8 +9,116 @@
     <style>
         body { padding: 1rem; background-color: #f8f9fa; }
         .section { margin-bottom: 2rem; }
-        .table-responsive { max-height: 400px; overflow-y: auto; }
         .navbar-brand { font-weight: bold; }
+        
+        /* Table improvements */
+        .table-responsive { 
+            overflow-x: auto; 
+            overflow-y: visible; 
+            max-height: none;
+        }
+        .table {
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-collapse: collapse;
+        }
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+            z-index: 10;
+            padding: 0.75rem;
+        }
+        .table tbody td {
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: rgba(0,0,0,.02);
+        }
+        .table-container {
+            margin-bottom: 2rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            overflow: visible;
+        }
+        
+        /* Override all tables to have consistent styling */
+        table.table {
+            width: 100%;
+            margin-bottom: 1rem;
+            border: none;
+        }
+        table.table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            padding: 0.75rem !important;
+            vertical-align: middle;
+            text-align: left;
+            /* Remove fixed widths */
+            width: auto !important; 
+        }
+        table.table td {
+            padding: 0.75rem !important;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+        table.table-sm th, 
+        table.table-sm td {
+            padding: 0.5rem !important;
+        }
+        table.table-bordered {
+            border: none;
+        }
+        
+        /* Tab styling improvements */
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 0;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 1rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .nav-tabs .nav-link:hover {
+            border-color: transparent;
+            color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            background-color: transparent;
+            border-bottom: 2px solid #0d6efd;
+            font-weight: 600;
+        }
+        
+        /* Tab content styling */
+        .tab-content {
+            min-height: 600px;
+            background: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            padding: 2rem;
+            overflow: visible; /* Prevent content from being cut off */
+        }
+        
+        /* Container sizing for better table display */
+        .container {
+            max-width: 1400px; /* Wider container for tables */
+        }
+        
+        /* Section headers in tabs */
+        .tab-pane h3 {
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -52,48 +160,318 @@
 
     <div class="container">
         <h1 class="mb-4">Master Control Program Admin Dashboard</h1>
-        <div class="section">
-            <h2>Health Checks</h2>
-            <div id="healthchecks" class="mb-3"></div>
-            <button class="btn btn-primary" onclick="loadHealthChecks()">Refresh Health Status</button>
-        </div>
-        <div class="section">
-            <h2>Prompt Templates</h2>
-            <div class="mb-2">
-                <button class="btn btn-success" onclick="showPromptTemplateForm()">Add New Template</button>
+        
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="health-tab" data-bs-toggle="tab" data-bs-target="#health" type="button" role="tab" aria-controls="health" aria-selected="true">
+                    <i class="bi bi-heart-pulse me-2"></i>Health Checks
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab" aria-controls="templates" aria-selected="false">
+                    <i class="bi bi-file-text me-2"></i>Prompt Templates
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fetchers-tab" data-bs-toggle="tab" data-bs-target="#fetchers" type="button" role="tab" aria-controls="fetchers" aria-selected="false">
+                    <i class="bi bi-download me-2"></i>Data Fetchers
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button" role="tab" aria-controls="rules" aria-selected="false">
+                    <i class="bi bi-shield-check me-2"></i>Rules
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="entitylogs-tab" data-bs-toggle="tab" data-bs-target="#entitylogs" type="button" role="tab" aria-controls="entitylogs" aria-selected="false">
+                    <i class="bi bi-clock-history me-2"></i>Entity Logs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="systemprompts-tab" data-bs-toggle="tab" data-bs-target="#systemprompts" type="button" role="tab" aria-controls="systemprompts" aria-selected="false" onclick="setTimeout(loadSystemPrompts, 100)">
+                    <i class="bi bi-chat-square-text me-2"></i>System Prompts
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="adminTabsContent">
+            <!-- Health Checks Tab -->
+            <div class="tab-pane fade show active" id="health" role="tabpanel" aria-labelledby="health-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">System Health Status</h3>
+                        <button class="btn btn-primary" onclick="loadHealthChecks()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Status
+                        </button>
+                    </div>
+                    <div id="healthchecks" class="mb-3"></div>
+                </div>
             </div>
-            <div id="prompt-templates-table" class="table-responsive"></div>
-            <div id="prompt-template-form" style="display:none;"></div>
-        </div>
-        <div class="section">
-            <h2>Data Fetchers</h2>
-            <div class="mb-2">
-                <button class="btn btn-success" onclick="showDataFetcherForm()">Add New Fetcher</button>
-                <button class="btn btn-info" onclick="loadDataFetchers()">Refresh List</button>
+
+            <!-- Prompt Templates Tab -->
+            <div class="tab-pane fade" id="templates" role="tabpanel" aria-labelledby="templates-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Prompt Templates Management</h3>
+                        <button class="btn btn-success" onclick="showPromptTemplateForm()">
+                            <i class="bi bi-plus-circle me-1"></i>Add New Template
+                        </button>
+                    </div>
+                    
+                    <!-- Intelligent Selection Info -->
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading"><i class="bi bi-lightbulb me-2"></i>Intelligent Template Selection</h5>
+                        <p class="mb-2">
+                            The system automatically selects the best prompt template based on <strong>intent keywords</strong> 
+                            matching the first 5 words of user commands:
+                        </p>
+                        <ul class="mb-2">
+                            <li><strong>Keyword Matching:</strong> Each template's keywords are compared against command words</li>
+                            <li><strong>Scoring System:</strong> Templates get points for each matched keyword</li>
+                            <li><strong>Tie-Breaking:</strong> Templates with more keywords (more specific) are preferred</li>
+                            <li><strong>Fallback:</strong> Uses "default" template when no keywords match</li>
+                        </ul>
+                        <p class="mb-0">
+                            <strong>Example:</strong> "turn on lights" → matches "turn" → selects home_automation template
+                        </p>
+                    </div>
+                    
+                    <div id="prompt-templates-table" class="table-responsive table-container"></div>
+                    <div id="prompt-template-form" style="display:none;"></div>
+                </div>
             </div>
-            <div id="data-fetchers-table" class="table-responsive"></div>
-            <div id="data-fetcher-form" style="display:none;"></div>
-        </div>
-        <div class="section">
-            <h2>Rules</h2>
-            <div class="mb-2">
-                <button class="btn btn-success" onclick="showSkippyGuardrailForm()">Add Skippy Guardrail</button>
-                <button class="btn btn-primary" onclick="showSubmindAutomationForm()">Add Submind Automation</button>
-                <button class="btn btn-info" onclick="loadRules()">Refresh List</button>
+
+            <!-- Data Fetchers Tab -->
+            <div class="tab-pane fade" id="fetchers" role="tabpanel" aria-labelledby="fetchers-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Data Fetchers Management</h3>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="showDataFetcherForm()">
+                                <i class="bi bi-plus-circle me-1"></i>Add New Fetcher
+                            </button>
+                            <button class="btn btn-info" onclick="loadDataFetchers()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh List
+                            </button>
+                        </div>
+                    </div>
+                    <div id="data-fetchers-table" class="table-responsive table-container"></div>
+                    <div id="data-fetcher-form" style="display:none;"></div>
+                </div>
             </div>
-            <div class="mb-2">
-                <label>Filter by type: 
-                    <select class="form-select d-inline-block" style="width: auto;" onchange="filterRulesByType(this.value)">
-                        <option value="">All Rules</option>
-                        <option value="skippy_guardrail">Skippy Guardrails</option>
-                        <option value="submind_automation">Submind Automations</option>
-                    </select>
-                </label>
+
+            <!-- Rules Tab -->
+            <div class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Rules Management</h3>
+                        <div>
+                            <button class="btn btn-success me-2" onclick="showSkippyGuardrailForm()">
+                                <i class="bi bi-shield-plus me-1"></i>Add Skippy Guardrail
+                            </button>
+                            <button class="btn btn-primary me-2" onclick="showSubmindAutomationForm()">
+                                <i class="bi bi-gear-fill me-1"></i>Add Submind Automation
+                            </button>
+                            <button class="btn btn-info" onclick="loadRules()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh List
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filter by type:</label>
+                        <select class="form-select" style="width: auto; display: inline-block;" onchange="filterRulesByType(this.value)">
+                            <option value="">All Rules</option>
+                            <option value="skippy_guardrail">Skippy Guardrails</option>
+                            <option value="submind_automation">Submind Automations</option>
+                        </select>
+                    </div>
+                    <div id="rules-table" class="table-responsive table-container"></div>
+                    <div id="rule-form" style="display:none;"></div>
+                </div>
             </div>
-            <div id="rules-table" class="table-responsive"></div>
-            <div id="rule-form" style="display:none;"></div>
+
+            <!-- Entity Logs Tab -->
+            <div class="tab-pane fade" id="entitylogs" role="tabpanel" aria-labelledby="entitylogs-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Home Assistant Entity Logs</h3>
+                        <button class="btn btn-info" onclick="loadLoggedEntities()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Entities
+                        </button>
+                    </div>
+
+                    <!-- Entity Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Filter by Domain:</label>
+                            <select class="form-select" id="domainFilter" onchange="filterEntitiesByDomain()">
+                                <option value="">All Domains</option>
+                                <option value="light">Light</option>
+                                <option value="switch">Switch</option>
+                                <option value="climate">Climate</option>
+                                <option value="sensor">Sensor</option>
+                                <option value="binary_sensor">Binary Sensor</option>
+                                <option value="device_tracker">Device Tracker</option>
+                                <option value="automation">Automation</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Select Entity:</label>
+                            <select class="form-select" id="entitySelect" onchange="loadEntityLogs()">
+                                <option value="">Choose an entity...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Entity Log Query Options -->
+                    <div class="row mb-4" id="logQueryOptions" style="display:none;">
+                        <div class="col-md-3">
+                            <label class="form-label">Limit:</label>
+                            <select class="form-select" id="logLimit">
+                                <option value="10">10 entries</option>
+                                <option value="25">25 entries</option>
+                                <option value="50" selected>50 entries</option>
+                                <option value="100">100 entries</option>
+                                <option value="500">500 entries</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Start Date:</label>
+                            <input type="datetime-local" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">End Date:</label>
+                            <input type="datetime-local" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-primary me-2" onclick="loadEntityLogs()">
+                                <i class="bi bi-search me-1"></i>Query Logs
+                            </button>
+                            <button class="btn btn-secondary" onclick="getEntitySummary()">
+                                <i class="bi bi-graph-up me-1"></i>Summary
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div id="entitySummary" style="display:none;" class="alert alert-info mb-4"></div>
+
+                    <!-- Entity Logs Display -->
+                    <div id="entityLogsDisplay"></div>
+                </div>
+            </div>
+
+            <!-- System Prompts Tab -->
+            <div class="tab-pane fade" id="systemprompts" role="tabpanel" aria-labelledby="systemprompts-tab">
+                <div class="section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">System Prompts Management</h3>
+                        <div>
+                            <button class="btn btn-info me-2" onclick="loadSystemPrompts()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                            <button class="btn btn-success" onclick="showSystemPromptForm()">
+                                <i class="bi bi-plus-circle me-1"></i>Add New System Prompt
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        System prompts define the baseline personality and capabilities for the MCP. 
+                        Only one system prompt can be active at a time.
+                    </div>
+                    
+                    <!-- Debug output -->
+                    <div id="systemPromptsDebug" class="alert alert-info mb-3">
+                        <small>Click the Refresh button if no data appears.</small>
+                    </div>
+                    
+                    <div class="table-responsive table-container">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="systemPromptsTable">
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- System Prompt Details Modal -->
+                <div class="modal fade" id="systemPromptDetailsModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">System Prompt Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="systemPromptDetails">
+                                <!-- Filled dynamically -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Prompt Form Modal -->
+                <div class="modal fade" id="systemPromptFormModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="systemPromptFormTitle">Add System Prompt</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="systemPromptForm">
+                                    <input type="hidden" id="systemPromptId">
+                                    <div class="mb-3">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="systemPromptName" required>
+                                        <div class="form-text">A unique identifier for this system prompt (e.g., "technical_expert")</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Description</label>
+                                        <input type="text" class="form-control" id="systemPromptDescription">
+                                        <div class="form-text">Brief description of the system prompt's purpose</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Prompt Text</label>
+                                        <textarea class="form-control" id="systemPromptText" rows="10" required></textarea>
+                                        <div class="form-text">The full system prompt text that will be sent to the LLM</div>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="systemPromptActive">
+                                        <label class="form-check-label">Set as Active System Prompt</label>
+                                        <div class="form-text">Only one system prompt can be active at a time</div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="saveSystemPromptBtn">Save System Prompt</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- Add more sections for other endpoints as needed -->
     </div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -125,21 +503,41 @@
         tableDiv.innerHTML = 'Loading...';
         try {
             const res = await axios.get(API_BASE + '/api/prompts');
-            const rows = res.data.map(t => `
-                <tr>
-                    <td>${t.id}</td>
-                    <td>${t.template_name}</td>
-                    <td>${t.intent_keywords}</td>
-                    <td>${t.system_prompt}</td>
-                    <td>${t.user_template}</td>
-                    <td>${JSON.stringify(t.pre_fetch_data)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="editPromptTemplate(${t.id})">Edit</button>
-                        <button class="btn btn-sm btn-danger" onclick="deletePromptTemplate(${t.id})">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-            tableDiv.innerHTML = `<table class="table table-bordered table-sm"><thead><tr><th>ID</th><th>Name</th><th>Keywords</th><th>System Prompt</th><th>User Template</th><th>Pre-fetch Data</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+            const rows = res.data.map(t => {
+                // Format keywords as badges
+                const keywordBadges = t.intent_keywords 
+                    ? t.intent_keywords.split(',').map(k => `<span class="badge bg-primary me-1">${k.trim()}</span>`).join('')
+                    : '<span class="text-muted">No keywords</span>';
+                
+                return `
+                    <tr>
+                        <td>${t.id}</td>
+                        <td><strong>${t.template_name}</strong></td>
+                        <td>${keywordBadges}</td>
+                        <td title="${t.system_prompt}">${t.system_prompt.substring(0, 60)}${t.system_prompt.length > 60 ? '...' : ''}</td>
+                        <td title="${t.user_template}">${t.user_template.substring(0, 60)}${t.user_template.length > 60 ? '...' : ''}</td>
+                        <td><code>${JSON.stringify(t.pre_fetch_data)}</code></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="editPromptTemplate(${t.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deletePromptTemplate(${t.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            tableDiv.innerHTML = `<table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Template Name</th>
+                        <th>Intent Keywords</th>
+                        <th>System Prompt</th>
+                        <th>User Template</th>
+                        <th>Pre-fetch Data</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
         } catch (e) {
             tableDiv.innerHTML = `<div class="text-danger">Failed to load prompt templates: ${e.message}</div>`;
         }
@@ -151,8 +549,20 @@
             <form onsubmit="submitPromptTemplateForm(event, ${template ? template.id : 'null'})">
                 <div class="mb-2"><label>Name: <input class="form-control" name="template_name" value="${template?.template_name || ''}" required></label></div>
                 <div class="mb-2"><label>Intent Keywords: <input class="form-control" name="intent_keywords" value="${template?.intent_keywords || ''}" required></label></div>
-                <div class="mb-2"><label>System Prompt: <textarea class="form-control" name="system_prompt" required>${template?.system_prompt || ''}</textarea></label></div>
-                <div class="mb-2"><label>User Template: <textarea class="form-control" name="user_template" required>${template?.user_template || ''}</textarea></label></div>
+                <div class="mb-2">
+                    <label>System Prompt:</label>
+                    <textarea class="form-control" name="system_prompt" required>${template?.system_prompt || ''}</textarea>
+                    <div class="form-text">
+                        Use <code>[system_prompt:name]</code> to reference a saved system prompt by name.
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label>User Template:</label>
+                    <textarea class="form-control" name="user_template" required>${template?.user_template || ''}</textarea>
+                    <div class="form-text">
+                        Use <code>{variable}</code> for data fetcher variables, <code>[skippy_guard_rail:name]</code> for guardrails.
+                    </div>
+                </div>
                 <div class="mb-2">
                     <label>Pre-fetch Data (JSON Array):</label>
                     <textarea class="form-control" name="pre_fetch_data" rows="3" required>${template ? JSON.stringify(template.pre_fetch_data, null, 2) : '[\n  "ha_device_status",\n  "rules_list",\n  "current_time"\n]'}</textarea>
@@ -556,13 +966,616 @@
         }
     }
     
-    // Initial load
+    // Initial load and tab handling
     window.onload = function() {
+        console.log("Window loaded - initializing admin interface");
+        
+        // Make sure we have the system prompts table ready for data
+        if (!document.getElementById('systemPromptsTable')) {
+            console.error("systemPromptsTable element not found in DOM!");
+        } else {
+            console.log("systemPromptsTable element found in DOM");
+        }
+        
+        // Load health checks immediately (default active tab)
         loadHealthChecks();
-        loadPromptTemplates();
-        loadDataFetchers();
-        loadRules();
+        
+        // Pre-load system prompts data in background
+        setTimeout(function() {
+            console.log("Pre-loading system prompts data");
+            loadSystemPrompts();
+        }, 1000);
+        
+        // Set up tab event listeners to load data when tabs are shown
+        const tabTriggerList = document.querySelectorAll('#adminTabs button[data-bs-toggle="tab"]');
+        tabTriggerList.forEach(tabTrigger => {
+            tabTrigger.addEventListener('shown.bs.tab', event => {
+                const targetTab = event.target.getAttribute('data-bs-target');
+                
+                // Load data based on which tab is shown
+                switch(targetTab) {
+                    case '#health':
+                        loadHealthChecks();
+                        break;
+                    case '#templates':
+                        loadPromptTemplates();
+                        break;
+                    case '#fetchers':
+                        loadDataFetchers();
+                        break;
+                    case '#rules':
+                        loadRules();
+                        break;
+                    case '#entitylogs':
+                        loadLoggedEntities();
+                        break;
+                    case '#systemprompts':
+                        loadSystemPrompts();
+                        break;
+                }
+            });
+        });
     };
+
+    // Entity Logs Functions
+    async function loadLoggedEntities() {
+        try {
+            const res = await axios.get(API_BASE + '/api/ha/entities/logs');
+            const entitySelect = document.getElementById('entitySelect');
+            const domainFilter = document.getElementById('domainFilter');
+            
+            // Clear existing options
+            entitySelect.innerHTML = '<option value="">Choose an entity...</option>';
+            
+            // Add entities to select
+            res.data.logged_entities.forEach(entityId => {
+                const option = document.createElement('option');
+                option.value = entityId;
+                option.textContent = entityId;
+                entitySelect.appendChild(option);
+            });
+            
+            console.log(`Loaded ${res.data.count} entities with logs`);
+        } catch (e) {
+            console.error('Failed to load logged entities:', e);
+            alert('Failed to load logged entities: ' + e.message);
+        }
+    }
+
+    function filterEntitiesByDomain() {
+        const domain = document.getElementById('domainFilter').value;
+        loadLoggedEntitiesForDomain(domain);
+    }
+
+    async function loadLoggedEntitiesForDomain(domain) {
+        try {
+            const url = domain ? API_BASE + `/api/ha/entities/logs?domain=${domain}` : API_BASE + '/api/ha/entities/logs';
+            const res = await axios.get(url);
+            const entitySelect = document.getElementById('entitySelect');
+            
+            // Clear existing options
+            entitySelect.innerHTML = '<option value="">Choose an entity...</option>';
+            
+            // Add entities to select
+            res.data.logged_entities.forEach(entityId => {
+                const option = document.createElement('option');
+                option.value = entityId;
+                option.textContent = entityId;
+                entitySelect.appendChild(option);
+            });
+            
+        } catch (e) {
+            console.error('Failed to load logged entities for domain:', e);
+        }
+    }
+
+    async function loadEntityLogs() {
+        const entityId = document.getElementById('entitySelect').value;
+        if (!entityId) {
+            document.getElementById('entityLogsDisplay').innerHTML = '<div class="alert alert-warning">Please select an entity first.</div>';
+            return;
+        }
+
+        document.getElementById('logQueryOptions').style.display = 'block';
+        
+        const limit = document.getElementById('logLimit').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        let url = API_BASE + `/api/ha/entities/log/${entityId}?limit=${limit}`;
+        if (startDate) url += `&start_date=${startDate}`;
+        if (endDate) url += `&end_date=${endDate}`;
+        
+        try {
+            const res = await axios.get(url);
+            const displayDiv = document.getElementById('entityLogsDisplay');
+            
+            if (res.data.log_entries.length === 0) {
+                displayDiv.innerHTML = '<div class="alert alert-info">No log entries found for this entity.</div>';
+                return;
+            }
+            
+            const rows = res.data.log_entries.map(entry => `
+                <tr>
+                    <td>${new Date(entry.timestamp).toLocaleString()}</td>
+                    <td><span class="badge ${entry.state_changed ? 'bg-primary' : 'bg-secondary'}">${entry.old_state?.state || 'N/A'}</span></td>
+                    <td><span class="badge ${entry.state_changed ? 'bg-success' : 'bg-secondary'}">${entry.new_state?.state || 'N/A'}</span></td>
+                    <td>
+                        ${entry.state_changed ? '<i class="bi bi-check-circle text-success" title="State Changed"></i>' : ''}
+                        ${entry.attributes_changed ? '<i class="bi bi-gear text-info" title="Attributes Changed"></i>' : ''}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="showLogDetails('${entry.timestamp}', ${JSON.stringify(entry).replace(/"/g, '&quot;')})">
+                            <i class="bi bi-eye"></i> Details
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            displayDiv.innerHTML = `
+                <div class="alert alert-success">
+                    Found ${res.data.count} log entries for <strong>${res.data.entity_id}</strong>
+                </div>
+                <div class="table-responsive table-container">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Old State</th>
+                                <th>New State</th>
+                                <th>Changes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+            
+        } catch (e) {
+            document.getElementById('entityLogsDisplay').innerHTML = `<div class="alert alert-danger">Error loading logs: ${e.message}</div>`;
+        }
+    }
+
+    async function getEntitySummary() {
+        const entityId = document.getElementById('entitySelect').value;
+        if (!entityId) {
+            alert('Please select an entity first.');
+            return;
+        }
+        
+        try {
+            const res = await axios.get(API_BASE + `/api/ha/entities/log/${entityId}/summary`);
+            const summaryDiv = document.getElementById('entitySummary');
+            
+            summaryDiv.innerHTML = `
+                <h5><i class="bi bi-graph-up me-2"></i>Summary for ${entityId}</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Total Logs:</strong> ${res.data.total_logs}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>State Changes:</strong> ${res.data.state_changes}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>First Log:</strong> ${res.data.first_log ? new Date(res.data.first_log).toLocaleString() : 'N/A'}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Last Log:</strong> ${res.data.last_log ? new Date(res.data.last_log).toLocaleString() : 'N/A'}
+                    </div>
+                </div>
+            `;
+            summaryDiv.style.display = 'block';
+            
+        } catch (e) {
+            alert('Error getting summary: ' + e.message);
+        }
+    }
+
+    function showLogDetails(timestamp, entry) {
+        const modal = `
+            <div class="modal fade" id="logDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Log Entry Details - ${new Date(timestamp).toLocaleString()}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <pre><code>${JSON.stringify(entry, null, 2)}</code></pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('logDetailsModal');
+        if (existingModal) existingModal.remove();
+        
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modal);
+        
+        // Show modal
+        const modalInstance = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+        modalInstance.show();
+    }
+
+    // ----------------- System Prompts Management -----------------
+    
+    // Load all system prompts
+    async function loadSystemPrompts() {
+        try {
+            console.log("Loading system prompts from API...");
+            console.log("API URL:", API_BASE + '/api/system-prompts');
+            const response = await axios.get(API_BASE + '/api/system-prompts');
+            console.log("System prompts API response:", response);
+            
+            const systemPrompts = response.data;
+            const tableBody = document.getElementById('systemPromptsTable');
+            
+            if (!tableBody) {
+                console.error("Could not find systemPromptsTable element!");
+                return;
+            }
+            
+            console.log("Clearing and updating table body...");
+            tableBody.innerHTML = '';
+            
+            if (!systemPrompts || systemPrompts.length === 0) {
+                console.log("No system prompts found in response");
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            No system prompts found. Click "Add New System Prompt" to create one.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            console.log(`Found ${systemPrompts.length} system prompts`);
+            
+            
+            try {
+                console.log("Adding rows for each system prompt...");
+                let tableRows = '';
+                
+                systemPrompts.forEach(prompt => {
+                    console.log("Processing prompt:", prompt);
+                    
+                    const statusBadge = prompt.is_active 
+                        ? '<span class="badge bg-success">Active</span>'
+                        : '<span class="badge bg-secondary">Inactive</span>';
+                        
+                    tableRows += `
+                        <tr>
+                            <td>${prompt.name}</td>
+                            <td>${prompt.description || '-'}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-info" onclick="viewSystemPrompt(${prompt.id})">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <button class="btn btn-primary" onclick="editSystemPrompt(${prompt.id})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    ${!prompt.is_active ? `
+                                    <button class="btn btn-success" onclick="activateSystemPrompt(${prompt.id})">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>` : ''}
+                                    <button class="btn btn-danger" onclick="deleteSystemPrompt(${prompt.id})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                console.log("Setting innerHTML with table rows");
+                tableBody.innerHTML = tableRows;
+                
+                // Add a success message
+                const tabPane = document.getElementById('systemprompts');
+                if (tabPane) {
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'alert alert-success mt-3';
+                    successMsg.innerHTML = `
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Successfully loaded ${systemPrompts.length} system prompts.
+                        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+                    `;
+                    
+                    // Remove any existing alerts
+                    const existingAlerts = tabPane.querySelectorAll('.alert');
+                    existingAlerts.forEach(alert => alert.remove());
+                    
+                    // Insert the success message at the top of the tab content
+                    const firstChild = tabPane.querySelector('.section');
+                    if (firstChild) {
+                        firstChild.insertBefore(successMsg, firstChild.firstChild);
+                    }
+                }
+                
+                console.log("System prompts table populated successfully");
+            } catch (innerError) {
+                console.error("Error rendering system prompts table:", innerError);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            Error rendering system prompts: ${innerError.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading system prompts:', error);
+            
+            // Get more detailed error information
+            const errorDetails = error.response ? 
+                `Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}` : 
+                error.message;
+                
+            console.error('Error details:', errorDetails);
+            
+            if (document.getElementById('systemPromptsTable')) {
+                document.getElementById('systemPromptsTable').innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-danger">
+                            Failed to load system prompts: ${error.message}<br>
+                            Check the console for more details.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                console.error('Could not find systemPromptsTable element for error display');
+            }
+        }
+    }
+    
+    // Display system prompt details
+    async function viewSystemPrompt(id) {
+        try {
+            const response = await axios.get(API_BASE + '/api/system-prompts');
+            const prompts = response.data;
+            const prompt = prompts.find(p => p.id === id);
+            
+            if (!prompt) {
+                alert('System prompt not found');
+                return;
+            }
+            
+            const detailsEl = document.getElementById('systemPromptDetails');
+            detailsEl.innerHTML = `
+                <div class="mb-3">
+                    <h5>Name:</h5>
+                    <p>${prompt.name}</p>
+                </div>
+                <div class="mb-3">
+                    <h5>Description:</h5>
+                    <p>${prompt.description || '-'}</p>
+                </div>
+                <div class="mb-3">
+                    <h5>Status:</h5>
+                    <p>${prompt.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}</p>
+                </div>
+                <div class="mb-3">
+                    <h5>Created:</h5>
+                    <p>${new Date(prompt.created_at).toLocaleString()}</p>
+                </div>
+                <div class="mb-3">
+                    <h5>Last Updated:</h5>
+                    <p>${new Date(prompt.updated_at).toLocaleString()}</p>
+                </div>
+                <div class="mb-3">
+                    <h5>Prompt Text:</h5>
+                    <pre class="bg-light p-3 border rounded">${prompt.prompt}</pre>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('systemPromptDetailsModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error viewing system prompt:', error);
+            alert('Failed to view system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+    
+    // Show form to add new system prompt
+    function showSystemPromptForm() {
+        document.getElementById('systemPromptFormTitle').textContent = 'Add New System Prompt';
+        document.getElementById('systemPromptId').value = '';
+        document.getElementById('systemPromptName').value = '';
+        document.getElementById('systemPromptDescription').value = '';
+        document.getElementById('systemPromptText').value = '';
+        document.getElementById('systemPromptActive').checked = false;
+        
+        const saveBtn = document.getElementById('saveSystemPromptBtn');
+        saveBtn.onclick = createSystemPrompt;
+        
+        const modal = new bootstrap.Modal(document.getElementById('systemPromptFormModal'));
+        modal.show();
+    }
+    
+    // Show form to edit existing system prompt
+    async function editSystemPrompt(id) {
+        try {
+            const response = await axios.get(API_BASE + '/api/system-prompts');
+            const prompts = response.data;
+            const prompt = prompts.find(p => p.id === id);
+            
+            if (!prompt) {
+                alert('System prompt not found');
+                return;
+            }
+            
+            document.getElementById('systemPromptFormTitle').textContent = 'Edit System Prompt';
+            document.getElementById('systemPromptId').value = prompt.id;
+            document.getElementById('systemPromptName').value = prompt.name;
+            document.getElementById('systemPromptDescription').value = prompt.description || '';
+            document.getElementById('systemPromptText').value = prompt.prompt;
+            document.getElementById('systemPromptActive').checked = prompt.is_active;
+            
+            const saveBtn = document.getElementById('saveSystemPromptBtn');
+            saveBtn.onclick = updateSystemPrompt;
+            
+            const modal = new bootstrap.Modal(document.getElementById('systemPromptFormModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error loading system prompt for edit:', error);
+            alert('Failed to load system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+    
+    // Create new system prompt
+    async function createSystemPrompt() {
+        const name = document.getElementById('systemPromptName').value.trim();
+        const description = document.getElementById('systemPromptDescription').value.trim();
+        const prompt = document.getElementById('systemPromptText').value.trim();
+        const isActive = document.getElementById('systemPromptActive').checked;
+        
+        if (!name || !prompt) {
+            alert('Name and prompt text are required');
+            return;
+        }
+        
+        try {
+            const response = await axios.post(API_BASE + '/api/system-prompts', {
+                name,
+                description,
+                prompt,
+                is_active: isActive
+            });
+            
+            // Hide the modal
+            bootstrap.Modal.getInstance(document.getElementById('systemPromptFormModal')).hide();
+            
+            // Reload the system prompts table
+            loadSystemPrompts();
+            
+            // Show success message
+            alert('System prompt created successfully');
+        } catch (error) {
+            console.error('Error creating system prompt:', error);
+            alert('Failed to create system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+    
+    // Update existing system prompt
+    async function updateSystemPrompt() {
+        const id = document.getElementById('systemPromptId').value;
+        const name = document.getElementById('systemPromptName').value.trim();
+        const description = document.getElementById('systemPromptDescription').value.trim();
+        const prompt = document.getElementById('systemPromptText').value.trim();
+        const isActive = document.getElementById('systemPromptActive').checked;
+        
+        if (!name || !prompt) {
+            alert('Name and prompt text are required');
+            return;
+        }
+        
+        try {
+            const response = await axios.put(API_BASE + `/api/system-prompts/${id}`, {
+                name,
+                description,
+                prompt,
+                is_active: isActive
+            });
+            
+            // Hide the modal
+            bootstrap.Modal.getInstance(document.getElementById('systemPromptFormModal')).hide();
+            
+            // Reload the system prompts table
+            loadSystemPrompts();
+            
+            // Show success message
+            alert('System prompt updated successfully');
+        } catch (error) {
+            console.error('Error updating system prompt:', error);
+            alert('Failed to update system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+    
+    // Activate system prompt
+    async function activateSystemPrompt(id) {
+        if (!confirm('Do you want to activate this system prompt? This will deactivate any other active prompt.')) {
+            return;
+        }
+        
+        try {
+            const response = await axios.post(API_BASE + `/api/system-prompts/${id}/activate`);
+            loadSystemPrompts();
+            alert('System prompt activated successfully');
+        } catch (error) {
+            console.error('Error activating system prompt:', error);
+            alert('Failed to activate system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+    
+    // Delete system prompt
+    async function deleteSystemPrompt(id) {
+        if (!confirm('Are you sure you want to delete this system prompt?')) {
+            return;
+        }
+        
+        try {
+            const response = await axios.delete(API_BASE + `/api/system-prompts/${id}`);
+            loadSystemPrompts();
+            alert('System prompt deleted successfully');
+        } catch (error) {
+            console.error('Error deleting system prompt:', error);
+            alert('Failed to delete system prompt: ' + (error.response?.data?.detail || error.message));
+        }
+    }
+
+    // Function to update all tables in the interface to be more user-friendly
+    function improveTableLayout() {
+        // Remove any max-height constraints from table containers
+        document.querySelectorAll('.table-responsive').forEach(container => {
+            container.style.maxHeight = 'none';
+            container.style.overflowY = 'visible';
+        });
+
+        // Convert all tables to the improved style
+        document.querySelectorAll('table.table').forEach(table => {
+            // Remove the table-bordered and table-sm classes and add table-striped and table-hover
+            table.classList.remove('table-bordered');
+            table.classList.add('table-striped', 'table-hover');
+            
+            // Remove any fixed width on table headers
+            table.querySelectorAll('th').forEach(th => {
+                if (th.style.width) th.style.width = 'auto';
+            });
+        });
+    }
+
+    // Run the improvement function when DOM is loaded and after any AJAX calls
+    document.addEventListener('DOMContentLoaded', improveTableLayout);
+    
+    // Create a MutationObserver to detect when tables are added to the DOM
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                // Check if any tables were added
+                mutation.addedNodes.forEach(node => {
+                    if (node.querySelectorAll) {
+                        const tables = node.querySelectorAll('table.table');
+                        if (tables.length > 0) {
+                            improveTableLayout();
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    // Start observing changes to the body
+    observer.observe(document.body, { childList: true, subtree: true });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

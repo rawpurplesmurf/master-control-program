@@ -1,0 +1,523 @@
+2025-10-09 18:12:14,039 - ERROR - Invalid action - missing 'service' field: {'entity_id': 'test'}
+2025-10-09 18:12:14,040 - ERROR - Test exception with stack trace: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/simple_debug_test.py", line 26, in test_debug_logging
+    raise ValueError("Invalid action format - missing service field")
+ValueError: Invalid action format - missing service field
+
+2025-10-09 18:14:22,865 - ERROR - Invalid action - service format invalid: service=turn_off, type=<class 'str'>
+2025-10-09 18:22:33,422 - ERROR - Invalid action - service format invalid: service=turn_off, type=<class 'str'>
+2025-10-09 18:25:27,091 - ERROR - 🐛 This is a debug error (should go to debug.log)
+2025-10-09 18:26:50,713 - ERROR - Invalid action - service format invalid: service=turn_off, type=<class 'str'>
+2025-10-09 18:27:29,636 - ERROR - Invalid action - service format invalid: service=turn_off, type=<class 'str'>
+2025-10-09 19:44:01,820 - ERROR - Unhandled exception on GET http://localhost:8000/api/prompts:   + Exception Group Traceback (most recent call last):
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+  |     recv_stream.close()
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | exceptiongroup.ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     recv_stream.close()
+    |   File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    |     self.gen.throw(type, value, traceback)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |   File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    |     response = await call_next(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    |     response = await f(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    |     content = await serialize_response(
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 9 validation errors:
+    |   {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    recv_stream.close()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    response = await self.dispatch_func(request, call_next)
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    response = await call_next(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    raise app_exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    response = await f(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    content = await serialize_response(
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 9 validation errors:
+  {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+
+
+2025-10-09 19:44:56,993 - ERROR - Unhandled exception on GET http://localhost:8000/api/prompts:   + Exception Group Traceback (most recent call last):
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+  |     recv_stream.close()
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | exceptiongroup.ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     recv_stream.close()
+    |   File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    |     self.gen.throw(type, value, traceback)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |   File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    |     response = await call_next(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    |     response = await f(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    |     content = await serialize_response(
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 9 validation errors:
+    |   {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    recv_stream.close()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    response = await self.dispatch_func(request, call_next)
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    response = await call_next(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    raise app_exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    response = await f(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    content = await serialize_response(
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 9 validation errors:
+  {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+
+
+2025-10-09 19:45:03,877 - ERROR - Unhandled exception on GET http://localhost:8000/api/prompts:   + Exception Group Traceback (most recent call last):
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 79, in collapse_excgroups
+  |     yield
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+  |     recv_stream.close()
+  |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py", line 781, in __aexit__
+  |     raise BaseExceptionGroup(
+  | exceptiongroup.ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    |     await self.app(scope, receive, _send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    |     recv_stream.close()
+    |   File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    |     self.gen.throw(type, value, traceback)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    |     response = await self.dispatch_func(request, call_next)
+    |   File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    |     response = await call_next(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    |     raise app_exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    |     await self.app(scope, receive_or_disconnect, send_no_error)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    |     await self.middleware_stack(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    |     await route.handle(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    |     await self.app(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    |     raise exc
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    |     await app(scope, receive, sender)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    |     response = await f(request)
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    |     content = await serialize_response(
+    |   File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    |     raise ResponseValidationError(
+    | fastapi.exceptions.ResponseValidationError: 9 validation errors:
+    |   {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    |   {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+    | 
+    +------------------------------------
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 187, in __call__
+    recv_stream.close()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/contextlib.py", line 135, in __exit__
+    self.gen.throw(type, value, traceback)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 184, in __call__
+    response = await self.dispatch_func(request, call_next)
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/main.py", line 105, in log_requests
+    response = await call_next(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 159, in call_next
+    raise app_exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/base.py", line 144, in coro
+    await self.app(scope, receive_or_disconnect, send_no_error)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 123, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 109, in app
+    response = await f(request)
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 409, in app
+    content = await serialize_response(
+  File "/Users/danielkingshott/Courier/master-control-program/venv/lib/python3.9/site-packages/fastapi/routing.py", line 252, in serialize_response
+    raise ResponseValidationError(
+fastapi.exceptions.ResponseValidationError: 9 validation errors:
+  {'type': 'string_type', 'loc': ('response', 0, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 1, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 2, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 3, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 4, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 5, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 6, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 7, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+  {'type': 'string_type', 'loc': ('response', 8, 'system_prompt'), 'msg': 'Input should be a valid string', 'input': None}
+
+
+2025-10-09 20:14:14,324 - ERROR - Exception in command processing pipeline for 'turn on the living room light': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/command_processor.py", line 237, in process_command_pipeline
+    context = execute_data_fetchers(template, command)
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/command_processor.py", line 125, in execute_data_fetchers
+    parsed_data = json.loads(template.pre_fetch_data)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not MagicMock
+
+2025-10-09 20:14:14,569 - ERROR - Exception in process_command for 'Help me': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 746, in process_command
+    result = await process_command_pipeline(command_input.command, db, source=command_input.source)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: LLM connection failed
+
+2025-10-09 20:14:14,657 - ERROR - Invalid action - missing 'service' field: {'invalid': 'action'}
+2025-10-09 20:14:14,692 - ERROR - Invalid action - not a dict: <class 'str'> = not a dict
+2025-10-09 20:14:14,692 - ERROR - Invalid action - missing 'service' field: {'entity_id': 'light.test'}
+2025-10-09 20:14:14,692 - ERROR - Invalid action - service format invalid: service=invalid_service, type=<class 'str'>
+2025-10-09 20:14:15,223 - ERROR - Exception in execute_home_assistant_action for {'service': 'light.turn_on'}: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1283, in execute_home_assistant_action
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:14:15,229 - ERROR - Exception in execute_bulk_actions for [{'service': 'light.turn_on'}]: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1329, in execute_bulk_actions
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:14:15,235 - ERROR - Exception in get_entity_action_history for light.living_room: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1372, in get_entity_action_history
+    history = await get_ha_action_history(entity_id, limit)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:14:21,658 - ERROR - Exception in command processing pipeline for 'turn on the living room light': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/command_processor.py", line 237, in process_command_pipeline
+    context = execute_data_fetchers(template, command)
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/command_processor.py", line 125, in execute_data_fetchers
+    parsed_data = json.loads(template.pre_fetch_data)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not MagicMock
+
+2025-10-09 20:15:51,077 - ERROR - Exception in process_command for 'Help me': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 746, in process_command
+    result = await process_command_pipeline(command_input.command, db, source=command_input.source)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: LLM connection failed
+
+2025-10-09 20:15:51,123 - ERROR - Invalid action - missing 'service' field: {'invalid': 'action'}
+2025-10-09 20:15:51,149 - ERROR - Invalid action - not a dict: <class 'str'> = not a dict
+2025-10-09 20:15:51,149 - ERROR - Invalid action - missing 'service' field: {'entity_id': 'light.test'}
+2025-10-09 20:15:51,149 - ERROR - Invalid action - service format invalid: service=invalid_service, type=<class 'str'>
+2025-10-09 20:15:51,707 - ERROR - Exception in execute_home_assistant_action for {'service': 'light.turn_on'}: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1283, in execute_home_assistant_action
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:15:51,712 - ERROR - Exception in execute_bulk_actions for [{'service': 'light.turn_on'}]: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1329, in execute_bulk_actions
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:15:51,718 - ERROR - Exception in get_entity_action_history for light.living_room: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1372, in get_entity_action_history
+    history = await get_ha_action_history(entity_id, limit)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:24:15,585 - ERROR - Exception in process_command for 'Help me': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 746, in process_command
+    result = await process_command_pipeline(command_input.command, db, source=command_input.source)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: LLM connection failed
+
+2025-10-09 20:24:15,621 - ERROR - Invalid action - missing 'service' field: {'invalid': 'action'}
+2025-10-09 20:24:15,659 - ERROR - Invalid action - not a dict: <class 'str'> = not a dict
+2025-10-09 20:24:15,659 - ERROR - Invalid action - missing 'service' field: {'entity_id': 'light.test'}
+2025-10-09 20:24:15,659 - ERROR - Invalid action - service format invalid: service=invalid_service, type=<class 'str'>
+2025-10-09 20:24:16,271 - ERROR - Exception in execute_home_assistant_action for {'service': 'light.turn_on'}: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1283, in execute_home_assistant_action
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:24:16,278 - ERROR - Exception in execute_bulk_actions for [{'service': 'light.turn_on'}]: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1329, in execute_bulk_actions
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:24:16,283 - ERROR - Exception in get_entity_action_history for light.living_room: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1372, in get_entity_action_history
+    history = await get_ha_action_history(entity_id, limit)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:28:22,705 - ERROR - Exception in process_command for 'Help me': Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 746, in process_command
+    result = await process_command_pipeline(command_input.command, db, source=command_input.source)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: LLM connection failed
+
+2025-10-09 20:28:22,741 - ERROR - Invalid action - missing 'service' field: {'invalid': 'action'}
+2025-10-09 20:28:22,776 - ERROR - Invalid action - not a dict: <class 'str'> = not a dict
+2025-10-09 20:28:22,776 - ERROR - Invalid action - missing 'service' field: {'entity_id': 'light.test'}
+2025-10-09 20:28:22,776 - ERROR - Invalid action - service format invalid: service=invalid_service, type=<class 'str'>
+2025-10-09 20:28:23,232 - ERROR - Exception in execute_home_assistant_action for {'service': 'light.turn_on'}: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1283, in execute_home_assistant_action
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:28:23,238 - ERROR - Exception in execute_bulk_actions for [{'service': 'light.turn_on'}]: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1329, in execute_bulk_actions
+    result = await execute_ha_action(action)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
+2025-10-09 20:28:23,245 - ERROR - Exception in get_entity_action_history for light.living_room: Traceback (most recent call last):
+  File "/Users/danielkingshott/Courier/master-control-program/mcp/router.py", line 1372, in get_entity_action_history
+    history = await get_ha_action_history(entity_id, limit)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/unittest/mock.py", line 2154, in _execute_mock_call
+    raise effect
+Exception: Test error
+
